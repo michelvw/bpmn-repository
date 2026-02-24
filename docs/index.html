@@ -5,14 +5,15 @@
   <title>BPMN Editor</title>
   <style>
     html, body { height: 100%; margin: 0; }
-    #canvas { width: 100%; height: 90vh; border: 1px solid #ccc; }
-    #controls { height: 10vh; padding: 5px; }
+    #canvas { width: 100%; height: 85vh; border: 1px solid #ccc; }
+    #controls { height: 15vh; padding: 5px; display: flex; gap: 10px; align-items: center; }
   </style>
 </head>
 <body>
 
 <div id="canvas"></div>
 <div id="controls">
+  <button id="new">New Diagram</button>
   <button id="load">Load</button>
   <button id="save">Save</button>
 </div>
@@ -26,16 +27,38 @@
   const DIAGRAM_ID = 'replace-with-uuid';
   const USER_ID = 'replace-with-user-id';
 
+  // Minimal empty BPMN diagram XML
+  const EMPTY_DIAGRAM_XML = `<?xml version="1.0" encoding="UTF-8"?>
+  <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                    id="Definitions_1"
+                    targetNamespace="http://bpmn.io/schema/bpmn">
+    <bpmn:process id="Process_1" isExecutable="false"/>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+      <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1"/>
+    </bpmndi:BPMNDiagram>
+  </bpmn:definitions>`;
+
+  // --- New Diagram button ---
+  document.getElementById('new').onclick = async () => {
+    await modeler.importXML(EMPTY_DIAGRAM_XML);
+    alert('New empty diagram started!');
+  };
+
+  // --- Load existing version ---
+  document.getElementById('load').onclick = async () => {
+    const xml = await loadDiagram(DIAGRAM_ID, 1); // example: load version 1
+    await modeler.importXML(xml);
+    alert('Diagram loaded!');
+  };
+
+  // --- Save current diagram ---
   document.getElementById('save').onclick = async () => {
     const { xml } = await modeler.saveXML({ format: true });
     await saveDiagram(DIAGRAM_ID, USER_ID, xml, 'Saved from editor');
     alert('Diagram saved!');
-  };
-
-  document.getElementById('load').onclick = async () => {
-    const xml = await loadDiagram(DIAGRAM_ID, 1); // load version 1 for example
-    await modeler.importXML(xml);
-    alert('Diagram loaded!');
   };
 </script>
 
