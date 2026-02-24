@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BPMN Editor</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #canvas { width: 100%; height: 90vh; border: 1px solid #ccc; }
+    #controls { height: 10vh; padding: 5px; }
+  </style>
+</head>
+<body>
+
+<div id="canvas"></div>
+<div id="controls">
+  <button id="load">Load</button>
+  <button id="save">Save</button>
+</div>
+
+<script type="module">
+  import BpmnModeler from './dist/bpmn-modeler.development.js';
+  import { saveDiagram, loadDiagram } from './DiagramService.js';
+
+  const modeler = new BpmnModeler({ container: '#canvas' });
+
+  const DIAGRAM_ID = 'replace-with-uuid';
+  const USER_ID = 'replace-with-user-id';
+
+  document.getElementById('save').onclick = async () => {
+    const { xml } = await modeler.saveXML({ format: true });
+    await saveDiagram(DIAGRAM_ID, USER_ID, xml, 'Saved from editor');
+    alert('Diagram saved!');
+  };
+
+  document.getElementById('load').onclick = async () => {
+    const xml = await loadDiagram(DIAGRAM_ID, 1); // load version 1 for example
+    await modeler.importXML(xml);
+    alert('Diagram loaded!');
+  };
+</script>
+
+</body>
+</html>
