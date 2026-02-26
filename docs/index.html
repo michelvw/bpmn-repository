@@ -19,6 +19,12 @@
   <button id="new">New</button>
   <button id="load">Load</button>
   <button id="save">Save</button>
+  <select id="diagramSelector">
+    <option value="">Select Diagram</option>
+  </select>
+  <select id="versionSelector">
+    <option value="">Select Version</option>
+  </select>
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
@@ -55,17 +61,83 @@
 
   // --- Load existing version ---
   document.getElementById('load').onclick = async () => {
-    const xml = await loadDiagram(DIAGRAM_ID, 1); // example: load version 1
-    await modeler.importXML(xml);
-    alert('Diagram loaded!');
+    const diagramId = document.getElementById('diagramSelector').value;
+    const version = document.getElementById('versionSelector').value;
+
+    if (!diagramId || !version) {
+      alert('Please select a diagram and version to load.');
+      return;
+    }
+
+    try {
+      const xml = await loadDiagram(diagramId, version);
+      await modeler.importXML(xml);
+      alert('Diagram loaded successfully!');
+    } catch (error) {
+      console.error('Error loading diagram:', error);
+      alert('Failed to load the diagram. Please try again.');
+    }
   };
 
   // --- Save current diagram ---
   document.getElementById('save').onclick = async () => {
-    const { xml } = await modeler.saveXML({ format: true });
-    await saveDiagram(DIAGRAM_ID, USER_ID, xml, 'Saved from editor');
-    alert('Diagram saved!');
+    const diagramId = document.getElementById('diagramSelector').value;
+    const userId = USER_ID; // Replace with actual user ID logic
+
+    if (!diagramId) {
+      alert('Please select a diagram to save.');
+      return;
+    }
+
+    try {
+      const { xml } = await modeler.saveXML({ format: true });
+      const comment = prompt('Enter a comment for this version:');
+
+      if (!comment) {
+        alert('Save operation canceled. Comment is required.');
+        return;
+      }
+
+      await saveDiagram(diagramId, userId, xml, comment);
+      alert('Diagram saved successfully!');
+    } catch (error) {
+      console.error('Error saving diagram:', error);
+      alert('Failed to save the diagram. Please try again.');
+    }
   };
+
+  async function populateDiagramSelector() {
+    const { data: diagrams } = await supabase.from('diagrams').select('id, name');
+    const diagramSelector = document.getElementById('diagramSelector');
+
+    diagrams.forEach(diagram => {
+      const option = document.createElement('option');
+      option.value = diagram.id;
+      option.textContent = diagram.name;
+      diagramSelector.appendChild(option);
+    });
+  }
+
+  document.getElementById('diagramSelector').addEventListener('change', async (event) => {
+    const diagramId = event.target.value;
+    const { data: versions } = await supabase
+      .from('diagram_versions')
+      .select('version')
+      .eq('diagram_id', diagramId)
+      .order('version', { ascending: false });
+
+    const versionSelector = document.getElementById('versionSelector');
+    versionSelector.innerHTML = '<option value="">Select Version</option>';
+
+    versions.forEach(version => {
+      const option = document.createElement('option');
+      option.value = version.version;
+      option.textContent = `Version ${version.version}`;
+      versionSelector.appendChild(option);
+    });
+  });
+
+  populateDiagramSelector();
 </script>
 
 </body>
