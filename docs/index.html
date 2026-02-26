@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>BPMN Editor</title>
+  <title>Rijk Zwaan BPMN Editor</title>
+  <link rel="stylesheet" href="./css/diagram-js.css">
+  <link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
   <style>
     html, body { height: 100%; margin: 0; }
     #canvas { width: 100%; height: 85vh; border: 1px solid #ccc; }
@@ -20,9 +22,7 @@
 
 <script src="./bpmn-modeler.production.min.js"></script>
 
-<script type="module">  
-  import 'bpmn-js/dist/assets/diagram-js.css';
-  import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
+<script type="module">    
   import { saveDiagram, loadDiagram } from './DiagramService.js';
 
   const modeler = new BpmnModeler({ container: '#canvas' });
