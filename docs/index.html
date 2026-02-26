@@ -18,8 +18,11 @@
   <button id="save">Save</button>
 </div>
 
-<script type="module">
-  import BpmnModeler from './bpmn-modeler.production.min.js';
+<script src="./bpmn-modeler.production.min.js"></script>
+
+<script type="module">  
+  import 'bpmn-js/dist/assets/diagram-js.css';
+  import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
   import { saveDiagram, loadDiagram } from './DiagramService.js';
 
   const modeler = new BpmnModeler({ container: '#canvas' });
