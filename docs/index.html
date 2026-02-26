@@ -11,6 +11,7 @@
     #controls { height: 15vh; padding: 5px; display: flex; gap: 10px; align-items: center; }
   </style>
 </head>
+
 <body>
 
 <div id="canvas"></div>
@@ -25,7 +26,9 @@
 <script type="module">    
   import { saveDiagram, loadDiagram } from './DiagramService.js';
 
-  const modeler = new BpmnModeler({ container: '#canvas' });
+  const modeler = new window.BpmnJS({
+    container: '#canvas'
+  });
 
   const DIAGRAM_ID = 'replace-with-uuid';
   const USER_ID = 'replace-with-user-id';
