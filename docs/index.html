@@ -64,6 +64,8 @@
     }
 
     try {
+      await modeler.importXML(EMPTY_DIAGRAM_XML); // Ensure the empty diagram is loaded
+
       const { data: newDiagram, error } = await supabase
         .from('diagrams')
         .insert({ name: diagramName })
