@@ -56,8 +56,36 @@
 
   // --- New Diagram button ---
   document.getElementById('new').onclick = async () => {
-    await modeler.importXML(EMPTY_DIAGRAM_XML);
-    alert('New empty diagram started!');
+    const diagramName = prompt('Enter a name for the new diagram:');
+
+    if (!diagramName) {
+      alert('Diagram creation canceled. Name is required.');
+      return;
+    }
+
+    try {
+      const { data: newDiagram, error } = await supabase
+        .from('diagrams')
+        .insert({ name: diagramName })
+        .select('id')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const diagramId = newDiagram.id;
+      const { xml } = await modeler.saveXML({ format: true });
+
+      await saveDiagram(diagramId, USER_ID, xml, 'Initial version');
+      alert('New diagram created and saved!');
+
+      // Refresh the diagram selector
+      populateDiagramSelector();
+    } catch (error) {
+      console.error('Error creating new diagram:', error);
+      alert('Failed to create the new diagram. Please try again.');
+    }
   };
 
   // --- Load existing version ---
