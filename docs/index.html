@@ -28,10 +28,10 @@
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
-import { supabase } from './supabase.js';
 
 <script type="module">    
   import { saveDiagram, loadDiagram } from './DiagramService.js';
+  import { supabase } from './supabase.js';
 
   const modeler = new window.BpmnJS({
     container: '#canvas'
