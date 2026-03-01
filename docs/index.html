@@ -78,13 +78,9 @@
       }
 
       const diagramId = newDiagram.id;
-      const { xml } = await modeler.saveXML({ format: true });
+      console.log('New diagram created with ID:', diagramId);
 
-      console.log('Saving initial version for diagram:', diagramId);
-      await saveDiagram(diagramId, USER_ID, xml, 'Initial version');
-      console.log('Initial version saved successfully.');
-
-      alert('New diagram created and saved!');
+      alert('New diagram created! Start modeling and save when ready.');
 
       // Refresh the diagram selector
       populateDiagramSelector();
