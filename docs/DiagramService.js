@@ -5,9 +5,11 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
     throw new Error('Missing required fields for saving the diagram.');
   }
 
+  console.log('Saving diagram with ID:', diagramId); // Debugging log
+
   const { data: latest, error: fetchError } = await supabase
     .from('diagram_versions')
-    .select('version')
+    .select('version', { head: true }) // Ensure proper headers
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false })
     .limit(1)
