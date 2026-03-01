@@ -25,10 +25,11 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
 
     if (latest) {
       nextVersion = latest.version + 1;
-      console
+      console.log('Latest version found:', latest.version, 'Next version will be:', nextVersion); // Debugging log
     }
   } catch (error) {
     console.warn('No existing versions found. Creating initial version.');
+    console.log( 'Version will be:', nextVersion); // Debugging log
   }
 
   try {
