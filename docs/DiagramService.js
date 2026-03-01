@@ -30,17 +30,26 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
     console.warn('No existing versions found. Creating initial version.');
   }
 
-  const { error: insertError } = await supabase.from('diagram_versions').insert({
-    diagram_id: diagramId,
-    version: nextVersion,
-    bpmn_xml: xml,
-    created_by: userId,
-    comment
-  });
+  try {
+    const { error: insertError } = await supabase.from('diagram_versions').insert({
+      diagram_id: diagramId,
+      version: nextVersion,
+      bpmn_xml: xml,
+      created_by: userId,
+      comment
+    });
 
-  if (insertError) {
-    console.error('Error saving diagram:', insertError);
-    throw new Error('Failed to save the diagram.');
+    if (insertError) {
+      if (insertError.code === '23505') { // Duplicate key error code for PostgreSQL
+        console.error('Duplicate key error:', insertError);
+        throw new Error('A version with this ID already exists. Please try again.');
+      }
+      console.error('Error saving diagram:', insertError);
+      throw new Error('Failed to save the diagram.');
+    }
+  } catch (error) {
+    console.error('Error during save operation:', error);
+    throw error;
   }
 }
 
