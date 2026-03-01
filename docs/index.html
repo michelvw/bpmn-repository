@@ -194,12 +194,15 @@
     const { data: diagrams, error } = await supabase
       .from('diagrams')
       .select('id, name, updated_at, diagram_versions(version)')
+      .eq('created_by', USER_ID) // Filter diagrams by USER_ID
       .order('updated_at', { ascending: false });
 
     if (error) {
       console.error('Error loading diagrams:', error);
       return;
     }
+
+    console.log('Loaded diagrams:', diagrams); // Debugging log
 
     const tbody = document.getElementById('diagramOverview').querySelector('tbody');
     tbody.innerHTML = '';
