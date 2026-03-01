@@ -10,6 +10,7 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
   let nextVersion = 1; // Default to version 1 for new diagrams
 
   try {
+    console.log('Fetching latest version for diagram_id:', diagramId);
     const { data: latest, error: fetchError } = await supabase
       .from('diagram_versions')
       .select('version', { head: true })
@@ -17,6 +18,11 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
       .order('version', { ascending: false })
       .limit(1)
       .single();
+
+    console.log('Query result:', latest);
+    if (fetchError) {
+      console.error('Error during version fetch:', fetchError);
+    }
 
     if (fetchError && fetchError.code !== 'PGRST116') { // Ignore "No rows found" error
       console.error('Error fetching latest version:', fetchError);
@@ -33,6 +39,13 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
   }
 
   try {
+    console.log('Inserting diagram version:', {
+      diagram_id: diagramId,
+      version: nextVersion,
+      bpmn_xml: xml,
+      created_by: userId,
+      comment
+    });
     const { error: insertError } = await supabase.from('diagram_versions').insert({
       diagram_id: diagramId,
       version: nextVersion,
