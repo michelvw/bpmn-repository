@@ -67,36 +67,14 @@
 
   // --- New Diagram button ---
   document.getElementById('newDiagram').onclick = async () => {
-    const diagramName = prompt('Enter a name for the new diagram:');
-
-    if (!diagramName) {
-      alert('Diagram creation canceled. Name is required.');
-      return;
-    }
-
     try {
-      await modeler.importXML(EMPTY_DIAGRAM_XML); // Ensure the empty diagram is loaded
-
-      const { data: newDiagram, error } = await supabase
-        .from('diagrams')
-        .insert({ name: diagramName, created_by: USER_ID }) // Associate diagram with the user
-        .select('id')
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const diagramId = newDiagram.id;
-      console.log('New diagram created with ID:', diagramId);
-
-      alert('New diagram created! Start modeling and save when ready.');
-
-      // Refresh the diagram selector
-      populateDiagramSelector();
+      await modeler.importXML(EMPTY_DIAGRAM_XML); // Start with an empty canvas
+      document.getElementById('initialPage').style.display = 'none';
+      document.getElementById('modelerPage').style.display = 'block';
+      console.log('Started a new diagram.');
     } catch (error) {
-      console.error('Error creating new diagram:', error);
-      alert('Failed to create the new diagram. Please try again.');
+      console.error('Error starting new diagram:', error);
+      alert('Failed to start a new diagram. Please try again.');
     }
   };
 
@@ -121,12 +99,35 @@
 
   // --- Save current diagram ---
   document.getElementById('save').onclick = async () => {
-    const diagramId = document.getElementById('diagramSelector').value;
+    let diagramId = document.getElementById('diagramSelector').value;
     const userId = USER_ID; // Replace with actual user ID logic
 
     if (!diagramId) {
-      alert('Please select a diagram to save.');
-      return;
+      const diagramName = prompt('Enter a name for the new diagram:');
+
+      if (!diagramName) {
+        alert('Save operation canceled. Name is required.');
+        return;
+      }
+
+      try {
+        const { data: newDiagram, error } = await supabase
+          .from('diagrams')
+          .insert({ name: diagramName, created_by: userId })
+          .select('id')
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        diagramId = newDiagram.id;
+        console.log('New diagram saved with ID:', diagramId);
+      } catch (error) {
+        console.error('Error saving new diagram:', error);
+        alert('Failed to save the new diagram. Please try again.');
+        return;
+      }
     }
 
     try {
