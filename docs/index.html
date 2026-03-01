@@ -82,23 +82,30 @@
   };
 
   // --- Load existing version ---
-  document.getElementById('load').onclick = async () => {
-    const diagramId = document.getElementById('diagramSelector').value;
-    const version = document.getElementById('versionSelector').value;
+  document.addEventListener('DOMContentLoaded', () => {
+    const loadButton = document.getElementById('load');
+    if (loadButton) {
+      loadButton.onclick = async () => {
+        const diagramId = document.getElementById('diagramSelector')?.value;
+        const version = document.getElementById('versionSelector')?.value;
 
-    if (!diagramId || !version) {
-      alert('Please select a diagram and version to load.');
-      return;
-    }
+        if (!diagramId || !version) {
+          alert('Please select a diagram and version to load.');
+          return;
+        }
 
-    try {
-      const xml = await loadDiagram(diagramId, version);
-      await modeler.importXML(xml);
-    } catch (error) {
-      console.error('Error loading diagram:', error);
-      alert('Failed to load the diagram. Please try again.');
+        try {
+          const xml = await loadDiagram(diagramId, version);
+          await modeler.importXML(xml);
+        } catch (error) {
+          console.error('Error loading diagram:', error);
+          alert('Failed to load the diagram. Please try again.');
+        }
+      };
+    } else {
+      console.error('Load button not found in the DOM.');
     }
-  };
+  });
 
   // --- Save current diagram ---
   document.getElementById('save').onclick = async () => {
