@@ -11,27 +11,23 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
 
   try {
     console.log('Fetching latest version for diagram_id:', diagramId);
-    const { data: latest, error: fetchError } = await supabase
+    const { data: latestVersions, error: fetchError } = await supabase
       .from('diagram_versions')
-      .select('version', { head: true })
+      .select('version')
       .eq('diagram_id', diagramId)
       .order('version', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    console.log('Query result:', latest);
     if (fetchError) {
       console.error('Error during version fetch:', fetchError);
-    }
-
-    if (fetchError && fetchError.code !== 'PGRST116') { // Ignore "No rows found" error
-      console.error('Error fetching latest version:', fetchError);
       throw new Error('Failed to fetch the latest version of the diagram.');
     }
 
-    if (latest) {
-      nextVersion = latest.version + 1;
-      console.log('Latest version found:', latest.version, 'Next version will be:', nextVersion); // Debugging log
+    if (latestVersions && latestVersions.length > 0) {
+      nextVersion = latestVersions[0].version + 1;
+      console.log('Latest version found:', latestVersions[0].version, 'Next version will be:', nextVersion); // Debugging log
+    } else {
+      console.warn('No existing versions found. Creating initial version.');
     }
   } catch (error) {
     console.warn('No existing versions found. Creating initial version.');
