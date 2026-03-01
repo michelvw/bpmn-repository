@@ -150,53 +150,55 @@
     }
   };
 
-  document.getElementById('saveDiagram').addEventListener('click', async () => {
-    let diagramId = document.getElementById('diagramSelector')?.value;
-    const userId = USER_ID; // Replace with actual user ID logic
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('saveDiagram').addEventListener('click', async () => {
+      let diagramId = document.getElementById('diagramSelector')?.value;
+      const userId = USER_ID; // Replace with actual user ID logic
 
-    if (!diagramId) {
-      const diagramName = prompt('Enter a name for the new diagram:');
+      if (!diagramId) {
+        const diagramName = prompt('Enter a name for the new diagram:');
 
-      if (!diagramName) {
-        alert('Save operation canceled. Name is required.');
-        return;
+        if (!diagramName) {
+          alert('Save operation canceled. Name is required.');
+          return;
+        }
+
+        try {
+          const { data: newDiagram, error } = await supabase
+            .from('diagrams')
+            .insert({ name: diagramName, created_by: userId })
+            .select('id')
+            .single();
+
+          if (error) {
+            throw error;
+          }
+
+          diagramId = newDiagram.id;
+          console.log('New diagram saved with ID:', diagramId);
+        } catch (error) {
+          console.error('Error saving new diagram:', error);
+          alert('Failed to save the new diagram. Please try again.');
+          return;
+        }
       }
 
       try {
-        const { data: newDiagram, error } = await supabase
-          .from('diagrams')
-          .insert({ name: diagramName, created_by: userId })
-          .select('id')
-          .single();
+        const { xml } = await modeler.saveXML({ format: true });
+        const comment = prompt('Enter a comment for this version:');
 
-        if (error) {
-          throw error;
+        if (!comment) {
+          alert('Save operation canceled. Comment is required.');
+          return;
         }
 
-        diagramId = newDiagram.id;
-        console.log('New diagram saved with ID:', diagramId);
+        await saveDiagram(diagramId, userId, xml, comment);
+        alert('Diagram saved successfully!');
       } catch (error) {
-        console.error('Error saving new diagram:', error);
-        alert('Failed to save the new diagram. Please try again.');
-        return;
+        console.error('Error saving diagram:', error);
+        alert('Failed to save the diagram. Please try again.');
       }
-    }
-
-    try {
-      const { xml } = await modeler.saveXML({ format: true });
-      const comment = prompt('Enter a comment for this version:');
-
-      if (!comment) {
-        alert('Save operation canceled. Comment is required.');
-        return;
-      }
-
-      await saveDiagram(diagramId, userId, xml, comment);
-      alert('Diagram saved successfully!');
-    } catch (error) {
-      console.error('Error saving diagram:', error);
-      alert('Failed to save the diagram. Please try again.');
-    }
+    });
   });
 
   async function populateDiagramSelector() {
