@@ -25,6 +25,7 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
 
     if (latest) {
       nextVersion = latest.version + 1;
+      console
     }
   } catch (error) {
     console.warn('No existing versions found. Creating initial version.');
