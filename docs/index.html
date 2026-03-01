@@ -14,17 +14,27 @@
 
 <body>
 
-<div id="canvas"></div>
-<div id="controls">
-  <button id="new">New</button>
-  <button id="load">Load</button>
-  <button id="save">Save</button>
-  <select id="diagramSelector">
-    <option value="">Select Diagram</option>
-  </select>
-  <select id="versionSelector">
-    <option value="">Select Version</option>
-  </select>
+<div id="initialPage">
+  <button id="newDiagram">New Diagram</button>
+  <h2>Your Diagrams</h2>
+  <table id="diagramOverview">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Last Modified</th>
+        <th>Latest Version</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Diagrams will be dynamically populated here -->
+    </tbody>
+  </table>
+</div>
+
+<div id="modelerPage" style="display: none;">
+  <div id="canvas"></div>
+  <button id="backToOverview">Back to Overview</button>
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
@@ -168,6 +178,65 @@
   });
 
   populateDiagramSelector();
+
+  async function loadDiagrams() {
+    const { data: diagrams, error } = await supabase
+      .from('diagrams')
+      .select('id, name, updated_at, diagram_versions(version)')
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading diagrams:', error);
+      return;
+    }
+
+    const tbody = document.getElementById('diagramOverview').querySelector('tbody');
+    tbody.innerHTML = '';
+
+    diagrams.forEach(diagram => {
+      const latestVersion = diagram.diagram_versions[0]?.version || 'N/A';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${diagram.name}</td>
+        <td>${new Date(diagram.updated_at).toLocaleString()}</td>
+        <td>${latestVersion}</td>
+        <td><button class="openDiagram" data-id="${diagram.id}">Open</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    document.querySelectorAll('.openDiagram').forEach(button => {
+      button.addEventListener('click', async (event) => {
+        const diagramId = event.target.dataset.id;
+        const { data: latestVersion } = await supabase
+          .from('diagram_versions')
+          .select('bpmn_xml')
+          .eq('diagram_id', diagramId)
+          .order('version', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (latestVersion) {
+          await modeler.importXML(latestVersion.bpmn_xml);
+          document.getElementById('initialPage').style.display = 'none';
+          document.getElementById('modelerPage').style.display = 'block';
+        }
+      });
+    });
+  }
+
+  document.getElementById('newDiagram').addEventListener('click', () => {
+    modeler.importXML(EMPTY_DIAGRAM_XML);
+    document.getElementById('initialPage').style.display = 'none';
+    document.getElementById('modelerPage').style.display = 'block';
+  });
+
+  document.getElementById('backToOverview').addEventListener('click', () => {
+    document.getElementById('modelerPage').style.display = 'none';
+    document.getElementById('initialPage').style.display = 'block';
+  });
+
+  loadDiagrams();
 </script>
 
 </body>
