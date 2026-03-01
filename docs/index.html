@@ -248,6 +248,7 @@
 
         if (latestVersion) {
           await modeler.importXML(latestVersion.bpmn_xml);
+          DIAGRAM_ID = diagramId; // Set the DIAGRAM_ID to the loaded diagram
           document.getElementById('initialPage').style.display = 'none';
           document.getElementById('modelerPage').style.display = 'block';
         }
