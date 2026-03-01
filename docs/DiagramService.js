@@ -7,20 +7,28 @@ export async function saveDiagram(diagramId, userId, xml, comment) {
 
   console.log('Saving diagram with ID:', diagramId); // Debugging log
 
-  const { data: latest, error: fetchError } = await supabase
-    .from('diagram_versions')
-    .select('version', { head: true }) // Ensure proper headers
-    .eq('diagram_id', diagramId)
-    .order('version', { ascending: false })
-    .limit(1)
-    .single();
+  let nextVersion = 1; // Default to version 1 for new diagrams
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // Ignore "No rows found" error
-    console.error('Error fetching latest version:', fetchError);
-    throw new Error('Failed to fetch the latest version of the diagram.');
+  try {
+    const { data: latest, error: fetchError } = await supabase
+      .from('diagram_versions')
+      .select('version', { head: true })
+      .eq('diagram_id', diagramId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // Ignore "No rows found" error
+      console.error('Error fetching latest version:', fetchError);
+      throw new Error('Failed to fetch the latest version of the diagram.');
+    }
+
+    if (latest) {
+      nextVersion = latest.version + 1;
+    }
+  } catch (error) {
+    console.warn('No existing versions found. Creating initial version.');
   }
-
-  const nextVersion = (latest?.version || 0) + 1;
 
   const { error: insertError } = await supabase.from('diagram_versions').insert({
     diagram_id: diagramId,
