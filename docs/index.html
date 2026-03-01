@@ -32,13 +32,14 @@
 <script type="module">    
   import { saveDiagram, loadDiagram } from './DiagramService.js';
   import { supabase } from './supabase.js';
+  import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/esm-browser/index.js';
 
   const modeler = new window.BpmnJS({
     container: '#canvas'
   });
 
   const DIAGRAM_ID = 'replace-with-uuid';
-  const USER_ID = 'replace-with-user-id';
+  const USER_ID = uuidv4(); // Generate a valid UUID for testing purposes
 
   // Minimal empty BPMN diagram XML
   const EMPTY_DIAGRAM_XML = `<?xml version="1.0" encoding="UTF-8"?>
@@ -79,7 +80,10 @@
       const diagramId = newDiagram.id;
       const { xml } = await modeler.saveXML({ format: true });
 
+      console.log('Saving initial version for diagram:', diagramId);
       await saveDiagram(diagramId, USER_ID, xml, 'Initial version');
+      console.log('Initial version saved successfully.');
+
       alert('New diagram created and saved!');
 
       // Refresh the diagram selector
