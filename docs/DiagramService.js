@@ -102,3 +102,35 @@ export async function changeDiagramName(diagramId, newName) {
     return false;
   }
 }
+
+export async function deleteDiagram(diagramId) {
+  try {
+    // Delete all versions of the diagram
+    const { error: versionError } = await supabase
+      .from('diagram_versions')
+      .delete()
+      .eq('diagram_id', diagramId);
+
+    if (versionError) {
+      console.error('Error deleting diagram versions:', versionError);
+      throw new Error('Failed to delete diagram versions.');
+    }
+
+    // Delete the diagram itself
+    const { error: diagramError } = await supabase
+      .from('diagrams')
+      .delete()
+      .eq('id', diagramId);
+
+    if (diagramError) {
+      console.error('Error deleting diagram:', diagramError);
+      throw new Error('Failed to delete diagram.');
+    }
+
+    console.log(`Diagram with ID ${diagramId} and its versions have been deleted.`);
+    return true;
+  } catch (err) {
+    console.error('Error during diagram deletion:', err);
+    return false;
+  }
+}
