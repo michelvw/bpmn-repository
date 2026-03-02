@@ -81,11 +81,11 @@
       document.getElementById('modelerPage').style.display = 'block';
 
       // Clear diagram details for a new diagram
-      document.getElementById('diagramName').textContent = 'N/A';
-      document.getElementById('diagramVersion').textContent = 'N/A';
-      document.getElementById('diagramComment').textContent = 'N/A';
-      document.getElementById('diagramOwner').textContent = 'N/A';
-      document.getElementById('diagramDate').textContent = 'N/A';
+      document.getElementById('diagramName').textContent = '';
+      document.getElementById('diagramVersion').textContent = '';
+      document.getElementById('diagramComment').textContent = '';
+      document.getElementById('diagramOwner').textContent = '';
+      document.getElementById('diagramDate').textContent = '';
     } catch (error) {
       console.error('Error starting new diagram:', error);
     }
@@ -99,9 +99,13 @@
       if (!comment) return;
 
       if (!DIAGRAM_ID) {
-        const name = prompt('Enter diagram name:');
-        if (!name) return;
-
+        if (document.getElementById('diagramName').textContent == '') {
+          const name = prompt('Enter diagram name:');
+        }
+        else {
+          const name = document.getElementById('diagramName').textContent;    
+        }  
+        
         const { data, error } = await supabase
           .from('diagrams')
           .insert({ name, owner_id: USER_ID })
@@ -224,6 +228,17 @@
         return;
       }
 
+      const { data: owner, error: ownerError } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', diagram.owner_id)
+        .single();
+
+      if (ownerError) {
+        console.error('Error fetching owner details:', ownerError);
+        return;
+      }
+
       const { data: latestVersion, error: versionError } = await supabase
         .from('diagram_versions')
         .select('version, comment')
@@ -240,7 +255,7 @@
       document.getElementById('diagramName').textContent = diagram.name || 'N/A';
       document.getElementById('diagramVersion').textContent = latestVersion?.version || 'N/A';
       document.getElementById('diagramComment').textContent = latestVersion?.comment || 'N/A';
-      document.getElementById('diagramOwner').textContent = diagram.owner_id || 'N/A';
+      document.getElementById('diagramOwner').textContent = owner?.name || 'N/A';
       document.getElementById('diagramDate').textContent = new Date(diagram.updated_at).toLocaleString() || 'N/A';
     } catch (err) {
       console.error('Error updating diagram details:', err);
