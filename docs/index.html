@@ -11,7 +11,6 @@
     #controls { height: 15vh; padding: 5px; display: flex; gap: 10px; align-items: center; }
   </style>
 </head>
-
 <body>
 
 <div id="initialPage">
@@ -42,18 +41,14 @@
 
 <script src="./bpmn-modeler.production.min.js"></script>
 
-<script type="module">    
-  import { saveDiagram, loadDiagram } from './DiagramService.js';
+<script type="module">
+  import { saveDiagram } from './DiagramService.js';
   import { supabase } from './supabase.js';
 
-  const modeler = new window.BpmnJS({
-    container: '#canvas'
-  });
-
-  let DIAGRAM_ID = 'replace-with-uuid';
+  const modeler = new window.BpmnJS({ container: '#canvas' });
+  let DIAGRAM_ID = null;
   const USER_ID = '78448143-9372-4636-9e2c-32e165b615d6'; // Temporary test user UUID
 
-  // Minimal empty BPMN diagram XML
   const EMPTY_DIAGRAM_XML = `<?xml version="1.0" encoding="UTF-8"?>
   <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                     xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
@@ -67,176 +62,116 @@
     </bpmndi:BPMNDiagram>
   </bpmn:definitions>`;
 
-  // --- New Diagram button ---
-  document.getElementById('newDiagram').onclick = async () => {
+  // --- NEW DIAGRAM ---
+  document.getElementById('newDiagram').addEventListener('click', async () => {
     try {
-      await modeler.importXML(EMPTY_DIAGRAM_XML); // Start with an empty canvas
+      await modeler.importXML(EMPTY_DIAGRAM_XML);
+      DIAGRAM_ID = null;
       document.getElementById('initialPage').style.display = 'none';
       document.getElementById('modelerPage').style.display = 'block';
-      console.log('Started a new diagram.');
     } catch (error) {
-      console.error('Error starting new diagram:', error);      
-    }
-  };
-
-  // --- Load existing version ---
-  document.addEventListener('DOMContentLoaded', () => {
-    const loadButton = document.getElementById('load');
-    if (loadButton) {
-      loadButton.onclick = async () => {
-        const diagramId = document.getElementById('diagramSelector')?.value;
-        const version = document.getElementById('versionSelector')?.value;
-
-        if (!diagramId || !version) {
-          alert('Please select a diagram and version to load.');
-          return;
-        }
-
-        try {
-          const xml = await loadDiagram(diagramId, version);
-          await modeler.importXML(xml);
-        } catch (error) {
-          console.error('Error loading diagram:', error);
-          alert('Failed to load the diagram. Please try again.');
-        }
-      };
-    } else {
-      console.error('Load button not found in the DOM.');
+      console.error('Error starting new diagram:', error);
     }
   });
 
-  // --- Save current diagram ---
-  document.addEventListener('DOMContentLoaded', () => {
-    const saveButton = document.getElementById('saveDiagram');
-    if (saveButton) {
-      saveButton.addEventListener('click', async () => {
-        const userId = USER_ID; // Replace with actual user ID logic
-        let diagramId = DIAGRAM_ID; // Changed from `const` to `let` to allow reassignment
+  // --- SAVE DIAGRAM ---
+  document.getElementById('saveDiagram').addEventListener('click', async () => {
+    try {
+      const { xml } = await modeler.saveXML({ format: true });
+      const comment = prompt('Enter a comment for this version:');
+      if (!comment) return;
 
-        try {
-          const { xml } = await modeler.saveXML({ format: true });
-          const comment = prompt('Enter a comment for this version:');
+      if (!DIAGRAM_ID) {
+        const name = prompt('Enter diagram name:');
+        if (!name) return;
 
-          if (!comment) {
-            alert('Save operation canceled. Comment is required.');
+        const { data, error } = await supabase
+          .from('diagrams')
+          .insert({ name, owner_id: USER_ID })
+          .select('id')
+          .single();
+        if (error) throw error;
+
+        DIAGRAM_ID = data.id;
+      }
+
+      await saveDiagram(DIAGRAM_ID, USER_ID, xml, comment);
+      alert('Diagram saved successfully!');
+      loadDiagrams();
+    } catch (err) {
+      console.error(err);
+      alert('Save failed.');
+    }
+  });
+
+  // --- BACK TO OVERVIEW ---
+  document.getElementById('backToOverview').addEventListener('click', () => {
+    document.getElementById('modelerPage').style.display = 'none';
+    document.getElementById('initialPage').style.display = 'block';
+    loadDiagrams();
+  });
+
+  // --- LOAD DIAGRAMS INTO TABLE ---
+  async function loadDiagrams() {
+    try {
+      const { data: diagrams, error } = await supabase
+        .from('diagrams')
+        .select('id, name, updated_at, diagram_versions(version)')
+        .eq('owner_id', USER_ID)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      const tbody = document.querySelector('#diagramOverview tbody');
+      tbody.innerHTML = '';
+
+      diagrams.forEach(diagram => {
+        const latestVersion = diagram.diagram_versions?.length
+          ? Math.max(...diagram.diagram_versions.map(v => v.version))
+          : 'N/A';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${diagram.name}</td>
+          <td>${new Date(diagram.updated_at).toLocaleString()}</td>
+          <td>${latestVersion}</td>
+          <td><button class="openDiagram" data-id="${diagram.id}">Open</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.querySelectorAll('.openDiagram').forEach(button => {
+        button.addEventListener('click', async (event) => {
+          const diagramId = event.target.dataset.id;
+          const { data: latestVersion, error } = await supabase
+            .from('diagram_versions')
+            .select('bpmn_xml')
+            .eq('diagram_id', diagramId)
+            .order('version', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (error) {
+            console.error(error);
+            alert('Failed to load diagram.');
             return;
           }
 
-          if (!diagramId || diagramId === 'replace-with-uuid') {
-            // New initial diagram
-            const diagramName = prompt('Enter a name for the new diagram:');
-
-            if (!diagramName) {
-              alert('Save operation canceled. Name is required.');
-              return;
-            }
-
-            try {
-              const { data: newDiagram, error } = await supabase
-                .from('diagrams')
-                .insert({ name: diagramName, owner_id: userId })
-                .select('id') // Explicitly select the `id` field
-                .single();
-
-              if (error) {
-                throw error;
-              }
-
-              diagramId = newDiagram.id; // Ensure DIAGRAM_ID is set to the valid new diagram ID
-              DIAGRAM_ID = diagramId; // Update the global DIAGRAM_ID
-              console.log('New diagram saved with ID:', diagramId);
-            } catch (error) {
-              console.error('Error saving new diagram:', error);
-              alert('Failed to save the new diagram. Please try again.');
-              return;
-            }
+          if (latestVersion) {
+            await modeler.importXML(latestVersion.bpmn_xml);
+            DIAGRAM_ID = diagramId;
+            document.getElementById('initialPage').style.display = 'none';
+            document.getElementById('modelerPage').style.display = 'block';
           }
-
-          // Save as a new version for the existing diagram
-          await saveDiagram(diagramId, userId, xml, comment);
-          alert('Diagram saved successfully!');
-        } catch (error) {
-          console.error('Error saving diagram:', error);
-          alert('Failed to save the diagram. Please try again.');
-        }
+        });
       });
-    } else {
-      console.error('Save button not found in the DOM.');
+
+    } catch (err) {
+      console.error('Error loading diagrams:', err);
     }
-  });
-
-  async function populateDiagramSelector() {
-    const { data: diagrams, error } = await supabase
-      .from('diagrams')
-      .select('id, name')
-      .eq('created_by', USER_ID); // Filter diagrams by USER_ID
-
-    if (error) {
-      console.error('Error fetching diagrams:', error);
-      return;
-    }    
-
-  async function loadDiagrams() {
-    const { data: diagrams, error } = await supabase
-      .from('diagrams')
-      .select('id, name, updated_at, diagram_versions(version)')
-      .eq('owner_id', USER_ID) // Filter diagrams by USER_ID
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading diagrams:', error);
-      return;
-    }
-
-    console.log('Loaded diagrams:', diagrams); // Debugging log
-
-    const tbody = document.getElementById('diagramOverview').querySelector('tbody');
-    tbody.innerHTML = '';
-
-    diagrams.forEach(diagram => {
-      const latestVersion = diagram.diagram_versions[0]?.version || 'N/A';
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${diagram.name}</td>
-        <td>${new Date(diagram.updated_at).toLocaleString()}</td>
-        <td>${latestVersion}</td>
-        <td><button class="openDiagram" data-id="${diagram.id}">Open</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-
-    document.querySelectorAll('.openDiagram').forEach(button => {
-      button.addEventListener('click', async (event) => {
-        const diagramId = event.target.dataset.id;
-        const { data: latestVersion } = await supabase
-          .from('diagram_versions')
-          .select('bpmn_xml')
-          .eq('diagram_id', diagramId)
-          .order('version', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (latestVersion) {
-          await modeler.importXML(latestVersion.bpmn_xml);
-          DIAGRAM_ID = diagramId; // Set the DIAGRAM_ID to the loaded diagram
-          document.getElementById('initialPage').style.display = 'none';
-          document.getElementById('modelerPage').style.display = 'block';
-        }
-      });
-    });
   }
 
-  const backToOverviewButton = document.getElementById('backToOverview');
-  if (backToOverviewButton) {
-    backToOverviewButton.addEventListener('click', () => {
-      document.getElementById('modelerPage').style.display = 'none';
-      document.getElementById('initialPage').style.display = 'block';
-      loadDiagrams(); // Refresh the overview page
-    });
-  } else {
-    console.error('Back to Overview button not found in the DOM.');
-  }
-
+  // --- INITIAL LOAD ---
   loadDiagrams();
 </script>
 
