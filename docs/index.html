@@ -111,7 +111,7 @@
     if (saveButton) {
       saveButton.addEventListener('click', async () => {
         const userId = USER_ID; // Replace with actual user ID logic
-        let diagramId = DIAGRAM_ID; // Assume DIAGRAM_ID is set when a diagram is opened
+        let diagramId = DIAGRAM_ID; // Changed from `const` to `let` to allow reassignment
 
         try {
           const { xml } = await modeler.saveXML({ format: true });
