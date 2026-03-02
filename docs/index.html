@@ -134,7 +134,7 @@
             try {
               const { data: newDiagram, error } = await supabase
                 .from('diagrams')
-                .insert({ name: diagramName, created_by: userId })
+                .insert({ name: diagramName, owner_id: userId })
                 .select('id') // Explicitly select the `id` field
                 .single();
 
