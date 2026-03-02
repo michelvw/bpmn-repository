@@ -34,9 +34,17 @@
 <div id="modelerPage" style="display: none;">
   <div id="canvas"></div>
   <div id="modelerControls">
+    <button id="newDiagram">New Diagram</button>
     <button id="saveDiagram">Save Diagram</button>
     <button id="backToOverview">Back to Overview</button>
   </div>
+  <div id="diagramDetails" style="margin-top: 10px;">
+      <p><strong>Name:</strong> <span id="diagramName">N/A</span></p>
+      <p><strong>Version:</strong> <span id="diagramVersion">N/A</span></p>
+      <p><strong>Comment:</strong> <span id="diagramComment">N/A</span></p>
+      <p><strong>Owner:</strong> <span id="diagramOwner">N/A</span></p>
+      <p><strong>Last Modified:</strong> <span id="diagramDate">N/A</span></p>
+    </div>
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
@@ -96,7 +104,6 @@
       }
 
       await saveDiagram(DIAGRAM_ID, USER_ID, xml, comment);
-      alert('Diagram saved successfully!');
       loadDiagrams();
     } catch (err) {
       console.error(err);
@@ -162,12 +169,39 @@
             DIAGRAM_ID = diagramId;
             document.getElementById('initialPage').style.display = 'none';
             document.getElementById('modelerPage').style.display = 'block';
+            updateDiagramDetails(diagramId); // Update diagram details when a diagram is loaded
           }
         });
       });
 
     } catch (err) {
       console.error('Error loading diagrams:', err);
+    }
+  }
+
+  // --- UPDATE DIAGRAM DETAILS ---
+  async function updateDiagramDetails(diagramId) {
+    try {
+      const { data: diagram, error } = await supabase
+        .from('diagrams')
+        .select('name, owner_id, updated_at, diagram_versions(version, comment)')
+        .eq('id', diagramId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching diagram details:', error);
+        return;
+      }
+
+      const latestVersion = diagram.diagram_versions?.[0];
+
+      document.getElementById('diagramName').textContent = diagram.name || 'N/A';
+      document.getElementById('diagramVersion').textContent = latestVersion?.version || 'N/A';
+      document.getElementById('diagramComment').textContent = latestVersion?.comment || 'N/A';
+      document.getElementById('diagramOwner').textContent = diagram.owner_id || 'N/A';
+      document.getElementById('diagramDate').textContent = new Date(diagram.updated_at).toLocaleString() || 'N/A';
+    } catch (err) {
+      console.error('Error updating diagram details:', err);
     }
   }
 
