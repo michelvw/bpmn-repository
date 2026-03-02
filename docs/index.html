@@ -174,45 +174,13 @@
     if (error) {
       console.error('Error fetching diagrams:', error);
       return;
-    }
-
-    const diagramSelector = document.getElementById('diagramSelector');
-    diagramSelector.innerHTML = ''; // Clear existing options
-
-    diagrams.forEach(diagram => {
-      const option = document.createElement('option');
-      option.value = diagram.id;
-      option.textContent = diagram.name;
-      diagramSelector.appendChild(option);
-    });
-  }
-
-  document.getElementById('diagramSelector').addEventListener('change', async (event) => {
-    const diagramId = event.target.value;
-    const { data: versions } = await supabase
-      .from('diagram_versions')
-      .select('version')
-      .eq('diagram_id', diagramId)
-      .order('version', { ascending: false });
-
-    const versionSelector = document.getElementById('versionSelector');
-    versionSelector.innerHTML = '<option value="">Select Version</option>';
-
-    versions.forEach(version => {
-      const option = document.createElement('option');
-      option.value = version.version;
-      option.textContent = `Version ${version.version}`;
-      versionSelector.appendChild(option);
-    });
-  });
-
-  populateDiagramSelector();
+    }    
 
   async function loadDiagrams() {
     const { data: diagrams, error } = await supabase
       .from('diagrams')
       .select('id, name, updated_at, diagram_versions(version)')
-      .eq('created_by', USER_ID) // Filter diagrams by USER_ID
+      .eq('owner_id', USER_ID) // Filter diagrams by USER_ID
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -257,12 +225,6 @@
       });
     });
   }
-
-  document.getElementById('newDiagram').addEventListener('click', () => {
-    modeler.importXML(EMPTY_DIAGRAM_XML);
-    document.getElementById('initialPage').style.display = 'none';
-    document.getElementById('modelerPage').style.display = 'block';
-  });
 
   const backToOverviewButton = document.getElementById('backToOverview');
   if (backToOverviewButton) {
