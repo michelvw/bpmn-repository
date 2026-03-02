@@ -75,8 +75,7 @@
       document.getElementById('modelerPage').style.display = 'block';
       console.log('Started a new diagram.');
     } catch (error) {
-      console.error('Error starting new diagram:', error);
-      alert('Failed to start a new diagram. Please try again.');
+      console.error('Error starting new diagram:', error);      
     }
   };
 
@@ -136,18 +135,21 @@
               const { data: newDiagram, error } = await supabase
                 .from('diagrams')
                 .insert({ name: diagramName, created_by: userId })
-                .select('id')
+                .select('id') // Explicitly select the `id` field
                 .single();
 
+              if (error) {
+                throw error;
+              }
+
+              diagramId = newDiagram.id; // Ensure DIAGRAM_ID is set to the valid new diagram ID
+              DIAGRAM_ID = diagramId; // Update the global DIAGRAM_ID
+              console.log('New diagram saved with ID:', diagramId);
             } catch (error) {
               console.error('Error saving new diagram:', error);
               alert('Failed to save the new diagram. Please try again.');
               return;
             }
-
-            diagramId = newDiagram.id; // Ensure DIAGRAM_ID is set to the valid new diagram ID
-            DIAGRAM_ID = diagramId; // Update the global DIAGRAM_ID
-            console.log('New diagram saved with ID:', diagramId);
           }
 
           // Save as a new version for the existing diagram
