@@ -255,7 +255,7 @@
       document.getElementById('diagramName').textContent = diagram.name || 'N/A';
       document.getElementById('diagramVersion').textContent = latestVersion?.version || 'N/A';
       document.getElementById('diagramComment').textContent = latestVersion?.comment || 'N/A';
-      document.getElementById('diagramOwner').textContent = owner?.name || 'N/A';
+      document.getElementById('diagramOwner').textContent = owner?.username || 'N/A';
       document.getElementById('diagramDate').textContent = new Date(diagram.updated_at).toLocaleString() || 'N/A';
     } catch (err) {
       console.error('Error updating diagram details:', err);
