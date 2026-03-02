@@ -79,6 +79,13 @@
       DIAGRAM_ID = null;
       document.getElementById('initialPage').style.display = 'none';
       document.getElementById('modelerPage').style.display = 'block';
+
+      // Clear diagram details for a new diagram
+      document.getElementById('diagramName').textContent = 'N/A';
+      document.getElementById('diagramVersion').textContent = 'N/A';
+      document.getElementById('diagramComment').textContent = 'N/A';
+      document.getElementById('diagramOwner').textContent = 'N/A';
+      document.getElementById('diagramDate').textContent = 'N/A';
     } catch (error) {
       console.error('Error starting new diagram:', error);
     }
@@ -244,6 +251,7 @@
   document.getElementById('editDiagramName').addEventListener('click', () => {
     const diagramNameSpan = document.getElementById('diagramName');
     const currentName = diagramNameSpan.textContent;
+    const editButton = document.getElementById('editDiagramName');
 
     // Replace the span with an input box
     const input = document.createElement('input');
@@ -252,6 +260,7 @@
     input.id = 'diagramNameInput';
 
     diagramNameSpan.replaceWith(input);
+    editButton.style.display = 'none'; // Hide the edit button while editing
     input.focus();
 
     // Save changes on blur
@@ -268,36 +277,16 @@
           updatedSpan.textContent = newName;
           input.replaceWith(updatedSpan);
 
-          // Re-add the edit button
-          const editButton = document.createElement('button');
-          editButton.id = 'editDiagramName';
-          editButton.textContent = 'Edit';
-          updatedSpan.after(editButton);
-
-          // Reattach the event listener
-          editButton.addEventListener('click', () => {
-            document.getElementById('editDiagramName').click();
-          });
+          editButton.style.display = 'inline'; // Show the edit button again
         } else {
           alert('Failed to update the diagram name.');
+          input.replaceWith(diagramNameSpan); // Revert to the original span
+          editButton.style.display = 'inline';
         }
       } else {
         // Revert back to the original span if no changes
-        const revertedSpan = document.createElement('span');
-        revertedSpan.id = 'diagramName';
-        revertedSpan.textContent = currentName;
-        input.replaceWith(revertedSpan);
-
-        // Re-add the edit button
-        const editButton = document.createElement('button');
-        editButton.id = 'editDiagramName';
-        editButton.textContent = 'Edit';
-        revertedSpan.after(editButton);
-
-        // Reattach the event listener
-        editButton.addEventListener('click', () => {
-          document.getElementById('editDiagramName').click();
-        });
+        input.replaceWith(diagramNameSpan);
+        editButton.style.display = 'inline';
       }
     });
   });
