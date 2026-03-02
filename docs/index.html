@@ -206,6 +206,68 @@
     }
   }
 
+  // --- EDIT DIAGRAM NAME ---
+  document.getElementById('editDiagramName').addEventListener('click', () => {
+    const diagramNameSpan = document.getElementById('diagramName');
+    const currentName = diagramNameSpan.textContent;
+
+    // Replace the span with an input box
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentName;
+    input.id = 'diagramNameInput';
+
+    diagramNameSpan.replaceWith(input);
+    input.focus();
+
+    // Save changes on blur
+    input.addEventListener('blur', async () => {
+      const newName = input.value.trim();
+
+      if (newName && newName !== currentName) {
+        const success = await changeDiagramName(DIAGRAM_ID, newName);
+
+        if (success) {
+          // Update the span with the new name
+          const updatedSpan = document.createElement('span');
+          updatedSpan.id = 'diagramName';
+          updatedSpan.textContent = newName;
+          input.replaceWith(updatedSpan);
+
+          // Re-add the edit button
+          const editButton = document.createElement('button');
+          editButton.id = 'editDiagramName';
+          editButton.textContent = 'Edit';
+          updatedSpan.after(editButton);
+
+          // Reattach the event listener
+          editButton.addEventListener('click', () => {
+            document.getElementById('editDiagramName').click();
+          });
+        } else {
+          alert('Failed to update the diagram name.');
+        }
+      } else {
+        // Revert back to the original span if no changes
+        const revertedSpan = document.createElement('span');
+        revertedSpan.id = 'diagramName';
+        revertedSpan.textContent = currentName;
+        input.replaceWith(revertedSpan);
+
+        // Re-add the edit button
+        const editButton = document.createElement('button');
+        editButton.id = 'editDiagramName';
+        editButton.textContent = 'Edit';
+        revertedSpan.after(editButton);
+
+        // Reattach the event listener
+        editButton.addEventListener('click', () => {
+          document.getElementById('editDiagramName').click();
+        });
+      }
+    });
+  });
+
   // --- INITIAL LOAD ---
   loadDiagrams();
 </script>
