@@ -83,3 +83,22 @@ export async function loadDiagram(diagramId, version) {
 
   return data.bpmn_xml;
 }
+
+export async function changeDiagramName(diagramId, newName) {
+  try {
+    const { error } = await supabase
+      .from('diagrams')
+      .update({ name: newName })
+      .eq('id', diagramId);
+
+    if (error) {
+      throw error;
+    }
+
+    console.log(`Diagram name updated to: ${newName}`);
+    return true;
+  } catch (err) {
+    console.error('Error updating diagram name:', err);
+    return false;
+  }
+}

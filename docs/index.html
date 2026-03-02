@@ -36,10 +36,10 @@
   <div id="modelerControls">
     <button id="newDiagram">New Diagram</button>
     <button id="saveDiagram">Save Diagram</button>
-    <button id="backToOverview">Back to Overview</button>
+    <button id="backToOverview">Open Diagram</button>
   </div>
   <div id="diagramDetails" style="margin-top: 10px;">
-      <p><strong>Name:</strong> <span id="diagramName">N/A</span></p>
+      <p><strong>Name:</strong> <span id="diagramName">N/A</span> <button id="editDiagramName">Edit</button></p>
       <p><strong>Version:</strong> <span id="diagramVersion">N/A</span></p>
       <p><strong>Comment:</strong> <span id="diagramComment">N/A</span></p>
       <p><strong>Owner:</strong> <span id="diagramOwner">N/A</span></p>
@@ -51,6 +51,7 @@
 
 <script type="module">
   import { saveDiagram } from './DiagramService.js';
+  import { changeDiagramName } from './DiagramService.js';
   import { supabase } from './supabase.js';
 
   const modeler = new window.BpmnJS({ container: '#canvas' });
