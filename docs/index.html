@@ -230,7 +230,7 @@
 
       const { data: owner, error: ownerError } = await supabase
         .from('users')
-        .select('name')
+        .select('username')
         .eq('id', diagram.owner_id)
         .single();
 
