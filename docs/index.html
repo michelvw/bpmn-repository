@@ -106,6 +106,7 @@
       }
 
       await saveDiagram(DIAGRAM_ID, USER_ID, xml, comment);
+      updateDiagramDetails(DIAGRAM_ID); // Reload diagram details after saving
       loadDiagrams();
     } catch (err) {
       console.error(err);
