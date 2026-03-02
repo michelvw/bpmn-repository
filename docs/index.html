@@ -264,18 +264,16 @@
     document.getElementById('modelerPage').style.display = 'block';
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const backToOverviewButton = document.getElementById('backToOverview');
-    if (backToOverviewButton) {
-      backToOverviewButton.addEventListener('click', () => {
-        document.getElementById('modelerPage').style.display = 'none';
-        document.getElementById('initialPage').style.display = 'block';
-        loadDiagrams(); // Refresh the overview page
-      });
-    } else {
-      console.error('Back to Overview button not found in the DOM.');
-    }
-  });
+  const backToOverviewButton = document.getElementById('backToOverview');
+  if (backToOverviewButton) {
+    backToOverviewButton.addEventListener('click', () => {
+      document.getElementById('modelerPage').style.display = 'none';
+      document.getElementById('initialPage').style.display = 'block';
+      loadDiagrams(); // Refresh the overview page
+    });
+  } else {
+    console.error('Back to Overview button not found in the DOM.');
+  }
 
   loadDiagrams();
 </script>
