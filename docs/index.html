@@ -208,7 +208,7 @@
     try {
       const { data: diagram, error } = await supabase
         .from('diagrams')
-        .select('name, owner_id, updated_at, diagram_versions(version, comment)')
+        .select('name, owner_id, updated_at')
         .eq('id', diagramId)
         .single();
 
@@ -217,7 +217,18 @@
         return;
       }
 
-      const latestVersion = diagram.diagram_versions?.[0];
+      const { data: latestVersion, error: versionError } = await supabase
+        .from('diagram_versions')
+        .select('version, comment')
+        .eq('diagram_id', diagramId)
+        .order('version', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (versionError) {
+        console.error('Error fetching latest version details:', versionError);
+        return;
+      }
 
       document.getElementById('diagramName').textContent = diagram.name || 'N/A';
       document.getElementById('diagramVersion').textContent = latestVersion?.version || 'N/A';
