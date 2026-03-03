@@ -9,8 +9,17 @@ let currentDiagramId = null;
 initModeler();
 
 async function loadOverview() {
+
   const { data } = await service.getDiagrams(USER_ID);
-  ui.renderTable(data, openDiagram);
+
+  ui.renderTable(
+    data,
+    openDiagram,
+    async (id) => {
+      await service.deleteDiagram(id);
+      await loadOverview();
+    }
+  );
 }
 
 async function openDiagram(id) {
@@ -27,15 +36,26 @@ async function openDiagram(id) {
 }
 
 async function saveDiagram() {
+
   if (!currentDiagramId) {
     const name = prompt('Diagram name:');
+    if (!name) return;
+
     const { data } = await service.createDiagram(name, USER_ID);
     currentDiagramId = data.id;
   }
 
   const xml = await getXML();
   const comment = prompt('Version comment:');
+  if (!comment) return;
+
   await service.saveVersion(currentDiagramId, USER_ID, xml, comment);
+
+  // 🔥 Immediately refresh details
+  const { data: details } = await service.getDiagramDetails(currentDiagramId);
+  ui.renderDiagramDetails(details);
+
+  await loadOverview();
 
   alert('Saved');
 }
@@ -50,6 +70,50 @@ async function deleteCurrent() {
   currentDiagramId = null;
   ui.showOverview();
   loadOverview();
+}
+
+function enableInlineRename() {
+
+  const nameSpan = document.getElementById('diagramName');
+  const renameBtn = document.getElementById('btnRename');
+
+  renameBtn.onclick = () => {
+
+    if (!currentDiagramId) {
+      alert('Save diagram first.');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = nameSpan.textContent;
+
+    nameSpan.replaceWith(input);
+    input.focus();
+
+    const save = async () => {
+
+      const newName = input.value.trim();
+
+      if (!newName) {
+        input.replaceWith(nameSpan);
+        return;
+      }
+
+      await service.renameDiagram(currentDiagramId, newName);
+
+      nameSpan.textContent = newName;
+      input.replaceWith(nameSpan);
+
+      await loadOverview();
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') input.replaceWith(nameSpan);
+    });
+  };
 }
 
 document.getElementById('btnNewOverview').onclick = async () => {
@@ -87,6 +151,27 @@ document.getElementById('btnSave').onclick = saveDiagram;
 document.getElementById('btnBack').onclick = () => { ui.showOverview(); loadOverview(); };
 document.getElementById('btnShare').onclick = shareDiagram;
 document.getElementById('btnDelete').onclick = deleteCurrent;
+document.getElementById('btnHistory').onclick = async () => {
+
+  const { data } =
+    await service.getVersionHistory(currentDiagramId);
+
+  ui.renderVersionHistory(data, async (versionId) => {
+
+    const { data: version } = await supabase
+      .from('diagram_versions')
+      .select('bpmn_xml')
+      .eq('id', versionId)
+      .single();
+
+    await loadXML(version.bpmn_xml);
+
+    document.getElementById('versionModal').style.display = 'none';
+  });
+};
+
+document.getElementById('closeVersionModal').onclick =
+  () => document.getElementById('versionModal').style.display = 'none';
 
 // Handle share link auto-load
 const sharedId = getSharedDiagramId();
@@ -96,3 +181,5 @@ if (sharedId) {
 } else {
   loadOverview();
 }
+
+enableInlineRename();

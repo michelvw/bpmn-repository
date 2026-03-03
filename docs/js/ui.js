@@ -8,23 +8,37 @@ export function showEditor() {
   editorPage.style.display = 'block';
 }
 
-export function renderTable(diagrams, onOpen) {
+export function renderTable(diagrams, onOpen, onDelete) {
+
   const tbody = document.querySelector('#diagramTable tbody');
   tbody.innerHTML = '';
 
   diagrams.forEach(d => {
+
     const version = d.diagram_versions?.length
       ? Math.max(...d.diagram_versions.map(v => v.version))
       : 0;
 
     const row = document.createElement('tr');
+
     row.innerHTML = `
       <td>${d.name}</td>
       <td>${new Date(d.updated_at).toLocaleString()}</td>
       <td>${version}</td>
-      <td><button data-id="${d.id}">Open</button></td>
+      <td>
+        <button class="open-btn">Open</button>
+        <button class="delete-btn">Delete</button>
+      </td>
     `;
-    row.querySelector('button').onclick = () => onOpen(d.id);
+
+    row.querySelector('.open-btn').onclick = () => onOpen(d.id);
+
+    row.querySelector('.delete-btn').onclick = () => {
+      if (confirm('Delete this diagram?')) {
+        onDelete(d.id);
+      }
+    };
+
     tbody.appendChild(row);
   });
 }
@@ -50,4 +64,33 @@ export function renderDiagramDetails(diagram) {
 
   document.getElementById('diagramDate').textContent =
     new Date(diagram.updated_at).toLocaleString();
+}
+
+export function renderVersionHistory(versions, onRestore) {
+
+  const container = document.getElementById('versionList');
+  container.innerHTML = '';
+
+  versions.forEach(v => {
+
+    const div = document.createElement('div');
+    div.style.marginBottom = '10px';
+
+    div.innerHTML = `
+      <strong>v${v.version}</strong>
+      (${new Date(v.created_at).toLocaleString()})
+      <br/>
+      ${v.comment || '-'}
+      <br/>
+      <button data-id="${v.id}">Restore</button>
+      <hr/>
+    `;
+
+    div.querySelector('button').onclick =
+      () => onRestore(v.id);
+
+    container.appendChild(div);
+  });
+
+  document.getElementById('versionModal').style.display = 'block';
 }

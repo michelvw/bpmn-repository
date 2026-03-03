@@ -76,3 +76,11 @@ export async function renameDiagram(id, newName) {
     .update({ name: newName })
     .eq('id', id);
 }
+
+export async function getVersionHistory(diagramId) {
+  return await supabase
+    .from('diagram_versions')
+    .select('id, version, comment, created_at')
+    .eq('diagram_id', diagramId)
+    .order('version', { ascending: false });
+}
