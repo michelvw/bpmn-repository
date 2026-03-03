@@ -130,9 +130,15 @@ async function openHistoryModal(diagramId) {
       const { data: version } =
         await service.getVersionById(versionId);
 
-      await loadXML(version.bpmn_xml);
-      setReadOnly(true);
+      document.getElementById('versionModal')
+        .classList.add('hidden');
 
+      ui.showEditor(); // ensure editor visible
+      await new Promise(r => setTimeout(r, 50)); // allow DOM render
+
+      await loadXML(version.bpmn_xml);
+
+      setReadOnly(true);
     },
 
     onRestore: async (versionId) => {
@@ -162,12 +168,16 @@ async function openHistoryModal(diagramId) {
 document.getElementById('btnNewOverview').onclick = async () => {
   currentDiagramId = null;
   await newEmptyDiagram();
+  setReadOnly(false);
+  ui.resetDiagramDetails();
   ui.showEditor();
 };
 
 document.getElementById('btnNewInside').onclick = async () => {
   currentDiagramId = null;
   await newEmptyDiagram();
+  setReadOnly(false);
+  ui.resetDiagramDetails();
 };
 
 document.getElementById('btnRename').onclick = async () => {
@@ -198,8 +208,10 @@ document.getElementById('btnHistory').onclick = async () => {
   openHistoryModal(currentDiagramId);
 };
 
-document.getElementById('closeVersionModal').onclick =
-  () => document.getElementById('versionModal').style.display = 'none';
+document.getElementById('closeVersionModal').onclick = () => {
+  document.getElementById('versionModal')
+    .classList.add('hidden');
+};
 
 // Handle share link auto-load
 const sharedId = getSharedDiagramId();

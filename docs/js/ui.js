@@ -70,13 +70,23 @@ export function renderDiagramDetails(diagram) {
     new Date(diagram.updated_at).toLocaleString();
 }
 
+export function resetDiagramDetails() {
+
+  document.getElementById('diagramName').textContent = 'New Diagram';
+  document.getElementById('diagramVersion').textContent = '-';
+  document.getElementById('diagramComment').textContent = '-';
+  document.getElementById('diagramOwner').textContent = '-';
+  document.getElementById('diagramDate').textContent = '-';
+}
+
 export function renderVersionHistory(versions, handlers) {
 
+  const modal = document.getElementById('versionModal');
   const container = document.getElementById('versionList');
-  container.innerHTML = '';
+
+  container.innerHTML = ''; // ensure full reset
 
   versions.forEach(v => {
-
     const card = document.createElement('div');
     card.className = 'version-card';
 
@@ -97,5 +107,5 @@ export function renderVersionHistory(versions, handlers) {
     container.appendChild(card);
   });
 
-  document.getElementById('versionModal').classList.remove('hidden');
+  modal.classList.remove('hidden');
 }
