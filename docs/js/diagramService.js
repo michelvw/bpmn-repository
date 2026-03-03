@@ -84,3 +84,11 @@ export async function getVersionHistory(diagramId) {
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false });
 }
+
+export async function getVersionById(versionId) {
+  return await supabase
+    .from('diagram_versions')
+    .select('bpmn_xml, version')
+    .eq('id', versionId)
+    .single();
+}

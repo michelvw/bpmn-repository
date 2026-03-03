@@ -8,7 +8,7 @@ export function showEditor() {
   editorPage.style.display = 'block';
 }
 
-export function renderTable(diagrams, onOpen, onDelete) {
+export function renderTable(diagrams, onOpen, onDelete, onHistory) {
 
   const tbody = document.querySelector('#diagramTable tbody');
   tbody.innerHTML = '';
@@ -27,11 +27,15 @@ export function renderTable(diagrams, onOpen, onDelete) {
       <td>${version}</td>
       <td>
         <button class="open-btn">Open</button>
+        <button class="history-btn">History</button>
         <button class="delete-btn">Delete</button>
       </td>
     `;
 
     row.querySelector('.open-btn').onclick = () => onOpen(d.id);
+
+    row.querySelector('.history-btn').onclick =
+  () => onHistory(d.id);
 
     row.querySelector('.delete-btn').onclick = () => {
       if (confirm('Delete this diagram?')) {
@@ -66,31 +70,32 @@ export function renderDiagramDetails(diagram) {
     new Date(diagram.updated_at).toLocaleString();
 }
 
-export function renderVersionHistory(versions, onRestore) {
+export function renderVersionHistory(versions, handlers) {
 
   const container = document.getElementById('versionList');
   container.innerHTML = '';
 
   versions.forEach(v => {
 
-    const div = document.createElement('div');
-    div.style.marginBottom = '10px';
+    const card = document.createElement('div');
+    card.className = 'version-card';
 
-    div.innerHTML = `
-      <strong>v${v.version}</strong>
-      (${new Date(v.created_at).toLocaleString()})
-      <br/>
-      ${v.comment || '-'}
-      <br/>
-      <button data-id="${v.id}">Restore</button>
-      <hr/>
+    card.innerHTML = `
+      <strong>Version ${v.version}</strong><br>
+      <small>${new Date(v.created_at).toLocaleString()}</small>
+      <p>${v.comment || '-'}</p>
+      <button class="view-btn">View</button>
+      <button class="restore-btn">Restore as Latest</button>
     `;
 
-    div.querySelector('button').onclick =
-      () => onRestore(v.id);
+    card.querySelector('.view-btn').onclick =
+      () => handlers.onView(v.id);
 
-    container.appendChild(div);
+    card.querySelector('.restore-btn').onclick =
+      () => handlers.onRestore(v.id);
+
+    container.appendChild(card);
   });
 
-  document.getElementById('versionModal').style.display = 'block';
+  document.getElementById('versionModal').classList.remove('hidden');
 }

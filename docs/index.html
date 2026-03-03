@@ -5,6 +5,61 @@
   <title>BPMN Repository</title>
   <link rel="stylesheet" href="./css/diagram-js.css">
   <link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
+  <style>
+  body { font-family: Arial, sans-serif; margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px; border-bottom: 1px solid #ddd; }
+  button { padding: 5px 10px; cursor: pointer; }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    width: 600px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 6px;
+    padding: 15px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .hidden { display: none; }
+
+  .version-card {
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+
+  .version-card small {
+    color: gray;
+  }
+
+  #editorPage h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #editorPage input {
+    font-size: 1.2em;
+  }
+</style>
 </head>
 <body>
 
@@ -50,24 +105,17 @@
 
 </div>
 
-<div id="versionModal" style="
-  display:none;
-  position:fixed;
-  top:20%;
-  left:50%;
-  transform:translateX(-50%);
-  background:white;
-  padding:20px;
-  border:1px solid #ccc;
-  max-height:60vh;
-  overflow:auto;
-  z-index:1000;
-">
+<div id="versionModal" class="modal hidden">
+  <div class="modal-content">
 
-  <h3>Version History</h3>
-  <div id="versionList"></div>
-  <button id="closeVersionModal">Close</button>
+    <div class="modal-header">
+      <h3>Version History</h3>
+      <button id="closeVersionModal">✕</button>
+    </div>
 
+    <div id="versionList"></div>
+
+  </div>
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>

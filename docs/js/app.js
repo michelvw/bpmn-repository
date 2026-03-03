@@ -18,6 +18,9 @@ async function loadOverview() {
     async (id) => {
       await service.deleteDiagram(id);
       await loadOverview();
+    },
+    async (id) => {
+      openHistoryModal(id);
     }
   );
 }
@@ -116,6 +119,46 @@ function enableInlineRename() {
   };
 }
 
+async function openHistoryModal(diagramId) {
+
+  const { data } = await service.getVersionHistory(diagramId);
+
+  ui.renderVersionHistory(data, {
+
+    onView: async (versionId) => {
+
+      const { data: version } =
+        await service.getVersionById(versionId);
+
+      await loadXML(version.bpmn_xml);
+      setReadOnly(true);
+
+    },
+
+    onRestore: async (versionId) => {
+
+      const { data: version } =
+        await service.getVersionById(versionId);
+
+      setReadOnly(false);
+
+      await service.saveVersion(
+        currentDiagramId,
+        USER_ID,
+        version.bpmn_xml,
+        `Restored from v${version.version}`
+      );
+
+      const { data: details } =
+        await service.getDiagramDetails(currentDiagramId);
+
+      ui.renderDiagramDetails(details);
+
+      document.getElementById('versionModal').classList.add('hidden');
+    }
+  });
+}
+
 document.getElementById('btnNewOverview').onclick = async () => {
   currentDiagramId = null;
   await newEmptyDiagram();
@@ -152,22 +195,7 @@ document.getElementById('btnBack').onclick = () => { ui.showOverview(); loadOver
 document.getElementById('btnShare').onclick = shareDiagram;
 document.getElementById('btnDelete').onclick = deleteCurrent;
 document.getElementById('btnHistory').onclick = async () => {
-
-  const { data } =
-    await service.getVersionHistory(currentDiagramId);
-
-  ui.renderVersionHistory(data, async (versionId) => {
-
-    const { data: version } = await supabase
-      .from('diagram_versions')
-      .select('bpmn_xml')
-      .eq('id', versionId)
-      .single();
-
-    await loadXML(version.bpmn_xml);
-
-    document.getElementById('versionModal').style.display = 'none';
-  });
+  openHistoryModal(currentDiagramId);
 };
 
 document.getElementById('closeVersionModal').onclick =
