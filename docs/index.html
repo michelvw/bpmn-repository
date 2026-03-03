@@ -24,16 +24,29 @@
 </div>
 
 <div id="editorPage" style="display:none">
-  <h2 id="diagramTitle"></h2>
-  <div id="canvas" style="height:75vh;border:1px solid #ccc"></div>
 
-  <button id="btnSave">Save</button>
-  <button id="btnBack">Back</button>
-  <button id="btnShare">Share</button>
-  <button id="btnNewInside">New</button>
-  <button id="btnDelete">Delete</button>
+  <h2>
+    <span id="diagramName">New Diagram</span>
+    <button id="btnRename">Rename</button>
+  </h2>
 
-  <div id="diagramDetails"></div>
+  <div id="canvas" style="height:70vh;border:1px solid #ccc"></div>
+
+  <div>
+    <button id="btnSave">Save</button>
+    <button id="btnBack">Back</button>
+    <button id="btnShare">Share</button>
+    <button id="btnNewInside">New</button>
+    <button id="btnDelete">Delete</button>
+  </div>
+
+  <div id="diagramDetails" style="margin-top:10px;">
+    <p>Version: <span id="diagramVersion">-</span></p>
+    <p>Comment: <span id="diagramComment">-</span></p>
+    <p>Owner: <span id="diagramOwner">-</span></p>
+    <p>Last Modified: <span id="diagramDate">-</span></p>
+  </div>
+
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>

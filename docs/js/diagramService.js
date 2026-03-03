@@ -56,3 +56,23 @@ export async function loadLatestVersion(diagramId) {
 export async function deleteDiagram(diagramId) {
   return await supabase.from('diagrams').delete().eq('id', diagramId);
 }
+
+export async function getDiagramDetails(diagramId) {
+  return await supabase
+    .from('diagrams')
+    .select(`
+      name,
+      updated_at,
+      owner:owner_id(username),
+      diagram_versions(version, comment)
+    `)
+    .eq('id', diagramId)
+    .single();
+}
+
+export async function renameDiagram(id, newName) {
+  return await supabase
+    .from('diagrams')
+    .update({ name: newName })
+    .eq('id', id);
+}

@@ -28,3 +28,26 @@ export function renderTable(diagrams, onOpen) {
     tbody.appendChild(row);
   });
 }
+
+export function renderDiagramDetails(diagram) {
+
+  document.getElementById('diagramName').textContent = diagram.name;
+
+  const versions = diagram.diagram_versions || [];
+
+  if (versions.length) {
+    const latest = versions.reduce((a, b) => a.version > b.version ? a : b);
+
+    document.getElementById('diagramVersion').textContent = latest.version;
+    document.getElementById('diagramComment').textContent = latest.comment || '-';
+  } else {
+    document.getElementById('diagramVersion').textContent = '-';
+    document.getElementById('diagramComment').textContent = '-';
+  }
+
+  document.getElementById('diagramOwner').textContent =
+    diagram.owner?.username || '-';
+
+  document.getElementById('diagramDate').textContent =
+    new Date(diagram.updated_at).toLocaleString();
+}

@@ -14,9 +14,15 @@ async function loadOverview() {
 }
 
 async function openDiagram(id) {
-  const { data } = await service.loadLatestVersion(id);
+
+  const { data: versionData } = await service.loadLatestVersion(id);
+  const { data: detailData } = await service.getDiagramDetails(id);
+
   currentDiagramId = id;
-  await loadXML(data.bpmn_xml);
+
+  await loadXML(versionData.bpmn_xml);
+
+  ui.renderDiagramDetails(detailData);
   ui.showEditor();
 }
 
@@ -55,6 +61,26 @@ document.getElementById('btnNewOverview').onclick = async () => {
 document.getElementById('btnNewInside').onclick = async () => {
   currentDiagramId = null;
   await newEmptyDiagram();
+};
+
+document.getElementById('btnRename').onclick = async () => {
+  if (!currentDiagramId) {
+    alert('Save the diagram first.');
+    return;
+  }
+
+  const currentName =
+    document.getElementById('diagramName').textContent;
+
+  const newName = prompt('New name:', currentName);
+
+  if (!newName || newName === currentName) return;
+
+  await service.renameDiagram(currentDiagramId, newName);
+
+  document.getElementById('diagramName').textContent = newName;
+
+  loadOverview(); // refresh table
 };
 
 document.getElementById('btnSave').onclick = saveDiagram;
