@@ -121,6 +121,13 @@ function enableInlineRename() {
 
 async function openHistoryModal(diagramId) {
 
+  if (!diagramId) {
+    alert('No diagram selected.');
+    return;
+  }
+
+  currentDiagramId = diagramId; // 🔥 always lock state
+
   const { data } = await service.getVersionHistory(diagramId);
 
   ui.renderVersionHistory(data, {
