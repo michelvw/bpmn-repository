@@ -1,7 +1,26 @@
 import { supabase } from './supabase.js';
 
-export async function getDiagrams(userId) {
-  return await supabase
+/**
+ * Centralized helper to get authenticated user
+ */
+async function getCurrentUser() {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error) throw error;
+  if (!user) throw new Error('Not authenticated');
+
+  return user;
+}
+
+/**
+ * Get all diagrams for current user
+ * RLS should already restrict results to owner
+ */
+export async function getDiagrams() {
+  const { data, error } = await supabase
     .from('diagrams')
     .select(`
       id,
@@ -9,56 +28,92 @@ export async function getDiagrams(userId) {
       updated_at,
       diagram_versions(version)
     `)
-    .eq('owner_id', userId)
     .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
 }
 
-export async function createDiagram(name, userId) {
-  return await supabase
+/**
+ * Create new diagram
+ * owner_id is assumed to default to auth.uid() in DB
+ */
+export async function createDiagram(name) {
+  const { data, error } = await supabase
     .from('diagrams')
-    .insert({ name, owner_id: userId })
+    .insert({ name })
     .select('id')
     .single();
+
+  if (error) throw error;
+  return data;
 }
 
-export async function saveVersion(diagramId, userId, xml, comment) {
+/**
+ * Save new version
+ */
+export async function saveVersion(diagramId, xml, comment) {
+  const user = await getCurrentUser();
 
-  const { data: latest } = await supabase
+  // Get latest version
+  const { data: latest, error: latestError } = await supabase
     .from('diagram_versions')
     .select('version')
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false })
     .limit(1);
 
+  if (latestError) throw latestError;
+
   const nextVersion = latest?.length ? latest[0].version + 1 : 1;
 
-  return await supabase
+  const { data, error } = await supabase
     .from('diagram_versions')
     .insert({
       diagram_id: diagramId,
-      created_by: userId,
+      created_by: user.id,
       version: nextVersion,
       comment,
       bpmn_xml: xml
     });
+
+  if (error) throw error;
+  return data;
 }
 
+/**
+ * Load latest version XML
+ */
 export async function loadLatestVersion(diagramId) {
-  return await supabase
+  const { data, error } = await supabase
     .from('diagram_versions')
     .select('bpmn_xml')
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false })
     .limit(1)
     .single();
+
+  if (error) throw error;
+  return data;
 }
 
+/**
+ * Delete diagram (RLS handles ownership)
+ */
 export async function deleteDiagram(diagramId) {
-  return await supabase.from('diagrams').delete().eq('id', diagramId);
+  const { error } = await supabase
+    .from('diagrams')
+    .delete()
+    .eq('id', diagramId);
+
+  if (error) throw error;
 }
 
+/**
+ * Get diagram details
+ */
 export async function getDiagramDetails(diagramId) {
-  return await supabase
+  const { data, error } = await supabase
     .from('diagrams')
     .select(`
       name,
@@ -68,27 +123,47 @@ export async function getDiagramDetails(diagramId) {
     `)
     .eq('id', diagramId)
     .single();
+
+  if (error) throw error;
+  return data;
 }
 
+/**
+ * Rename diagram
+ */
 export async function renameDiagram(id, newName) {
-  return await supabase
+  const { error } = await supabase
     .from('diagrams')
     .update({ name: newName })
     .eq('id', id);
+
+  if (error) throw error;
 }
 
+/**
+ * Get version history
+ */
 export async function getVersionHistory(diagramId) {
-  return await supabase
+  const { data, error } = await supabase
     .from('diagram_versions')
     .select('id, version, comment, created_at')
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false });
+
+  if (error) throw error;
+  return data;
 }
 
+/**
+ * Get specific version content
+ */
 export async function getVersionById(versionId) {
-  return await supabase
+  const { data, error } = await supabase
     .from('diagram_versions')
     .select('bpmn_xml, version')
     .eq('id', versionId)
     .single();
+
+  if (error) throw error;
+  return data;
 }
