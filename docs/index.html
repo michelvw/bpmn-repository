@@ -110,6 +110,21 @@
   <button id="btnRename">Rename</button>
 </h2>
 
+  <div id="readOnlyBanner" style="
+  display:none;
+  background:#fff3cd;
+  border:1px solid #ffeeba;
+  padding:8px;
+  margin-bottom:6px;
+  border-radius:4px;
+  font-size:14px;
+">
+  Viewing historical version (read-only)
+  <button id="btnReturnToLatest" style="margin-left:10px">
+    Return to latest version
+  </button>
+  </div>
+  
   <div id="canvas" style="height:70vh;border:1px solid #ccc"></div>
 
   <div>
@@ -164,6 +179,7 @@
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
+<script src="./bpmn-navigated-viewer.production.min.js"></script>
 <script type="module" src="./js/app.js"></script>
 
 </body>
