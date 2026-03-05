@@ -7,6 +7,7 @@ import {
 } from './modeler.js';
 
 import * as service from './diagramService.js';
+import * as userService from './userService.js';
 import * as ui from './ui.js';
 import { generateShareLink, getSharedDiagramId } from './share.js';
 import { supabase } from './supabase.js';
@@ -253,6 +254,43 @@ document.getElementById('btnLogout').onclick = async () => {
   document.getElementById('authPage').style.display = 'block';
   document.getElementById('overviewPage').style.display = 'none';
   document.getElementById('editorPage').style.display = 'none';
+};
+
+document.getElementById('btnProfile').onclick = async () => {
+
+  const { data } = await userService.getProfile();
+
+  document.getElementById('profileUsername').value = data.username || '';
+
+  document
+    .getElementById('profileModal')
+    .classList.remove('hidden');
+};
+
+document.getElementById('closeProfileModal').onclick = () => {
+
+  document
+    .getElementById('profileModal')
+    .classList.add('hidden');
+};
+
+document.getElementById('btnSaveProfile').onclick = async () => {
+
+  const username =
+    document.getElementById('profileUsername').value.trim();
+
+  if (!username) {
+    alert('Username required');
+    return;
+  }
+
+  await userService.updateProfile(username);
+
+  alert('Profile updated');
+
+  document
+    .getElementById('profileModal')
+    .classList.add('hidden');
 };
 
 /* ===============================

@@ -87,8 +87,9 @@
 </div>
 
 <div id="overviewPage">
-  <button id="btnLogout">Logout</button>
   <button id="btnNewOverview">New Diagram</button>
+  <button id="btnProfile">Profile</button>
+  <button id="btnLogout">Logout</button>
   <table id="diagramTable">
     <thead>
       <tr>
@@ -138,6 +139,26 @@
     </div>
 
     <div id="versionList"></div>
+
+  </div>
+</div>
+
+<div id="profileModal" class="modal hidden">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h3>User Profile</h3>
+      <button id="closeProfileModal">✕</button>
+    </div>
+
+    <div>
+      <label>Username</label>
+      <input id="profileUsername" type="text">
+    </div>
+
+    <div style="margin-top:10px">
+      <button id="btnSaveProfile">Save</button>
+    </div>
 
   </div>
 </div>
