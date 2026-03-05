@@ -15,8 +15,6 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentDiagramId = null;
 
-initModeler();
-
 /* ===============================
    OVERVIEW
 ================================= */
