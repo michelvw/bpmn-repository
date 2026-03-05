@@ -298,6 +298,22 @@ document.getElementById('btnSaveProfile').onclick = async () => {
     .classList.add('hidden');
 };
 
+document.getElementById('btnReturnToLatest').onclick =
+  async () => {
+
+    enableModeling();
+
+    const versionData =
+      await service.loadLatestVersion(currentDiagramId);
+
+    const details =
+      await service.getDiagramDetails(currentDiagramId);
+
+    await loadXML(versionData.bpmn_xml);
+
+    ui.renderDiagramDetails(details);
+  };
+
 /* ===============================
    STARTUP
 ================================= */
