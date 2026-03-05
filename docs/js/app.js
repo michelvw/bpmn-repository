@@ -3,9 +3,8 @@ import {
   newEmptyDiagram,
   loadXML,
   getXML,
-  enableEditing,
-  enableViewing
-} from './modeler.js';from './modeler.js';
+  setReadOnly
+} from './modeler.js';
 
 import * as service from './diagramService.js';
 import * as userService from './userService.js';
@@ -45,8 +44,6 @@ async function loadOverview() {
 async function openDiagram(id) {
   if (!id) return;
 
-  enableEditing();
-
   const versionData = await service.loadLatestVersion(id);
   const detailData = await service.getDiagramDetails(id);
 
@@ -55,7 +52,7 @@ async function openDiagram(id) {
   await loadXML(versionData.bpmn_xml);
 
   ui.renderDiagramDetails(detailData);
-
+  setReadOnly(false);
   ui.showEditor();
 }
 
@@ -120,34 +117,24 @@ async function openHistoryModal(diagramId) {
   ui.renderVersionHistory(history, {
 
     onView: async (versionId) => {
-
       const version = await service.getVersionById(versionId);
-
-      const details =
-        await service.getDiagramDetails(currentDiagramId);
 
       document
         .getElementById('versionModal')
         .classList.add('hidden');
 
-      enableViewing();
-
       ui.showEditor();
 
-      await loadXML(version.bpmn_xml);
+      await new Promise(r => setTimeout(r, 50));
 
-      ui.renderDiagramDetails({
-        ...details,
-        diagram_versions: [
-          { version: version.version, comment: '(historical version)' }
-        ]
-      });
+      await loadXML(version.bpmn_xml);
+      setReadOnly(true);
     },
 
     onRestore: async (versionId) => {
       const version = await service.getVersionById(versionId);
 
-      enableEditing();
+      setReadOnly(false);
 
       await service.saveVersion(
         currentDiagramId,
@@ -185,7 +172,7 @@ function shareDiagram() {
 async function createNewDiagram(showEditor = true) {
   currentDiagramId = null;
   await newEmptyDiagram();
-  enableEditing();
+  setReadOnly(false);
   ui.resetDiagramDetails();
 
   if (showEditor) ui.showEditor();
@@ -306,22 +293,6 @@ document.getElementById('btnSaveProfile').onclick = async () => {
     .classList.add('hidden');
 };
 
-document.getElementById('btnReturnToLatest').onclick =
-  async () => {
-
-    enableEditing();
-
-    const versionData =
-      await service.loadLatestVersion(currentDiagramId);
-
-    const details =
-      await service.getDiagramDetails(currentDiagramId);
-
-    await loadXML(versionData.bpmn_xml);
-
-    ui.renderDiagramDetails(details);
-  };
-
 /* ===============================
    STARTUP
 ================================= */
@@ -337,7 +308,7 @@ if (sessionData.session) {
 
   if (sharedId) {
     await openDiagram(sharedId);
-    enableViewing();
+    setReadOnly(true);
   } else {
     await loadOverview();
   }
