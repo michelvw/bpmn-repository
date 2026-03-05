@@ -239,6 +239,22 @@ document.getElementById('btnSignup').onclick = () =>
 document.getElementById('btnLogin').onclick = () =>
   handleLogin(emailInput.value, passwordInput.value);
 
+document.getElementById('btnLogout').onclick = async () => {
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  currentUser = null;
+
+  document.getElementById('authPage').style.display = 'block';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'none';
+};
+
 /* ===============================
    STARTUP
 ================================= */
