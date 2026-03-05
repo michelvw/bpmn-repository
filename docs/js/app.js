@@ -5,7 +5,7 @@ import {
   getXML,
   enableEditing,
   enableViewing
-} from './modeler.js';from './modeler.js';
+} from './modeler.js';
 
 import * as service from './diagramService.js';
 import * as userService from './userService.js';
