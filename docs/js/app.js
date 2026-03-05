@@ -1,10 +1,9 @@
 import {
-  initModeler,
+  enableModeling,
+  enableViewing,
   newEmptyDiagram,
   loadXML,
-  getXML,
-  enableEditing,
-  enableViewing
+  getXML
 } from './modeler.js';
 
 import * as service from './diagramService.js';
@@ -43,19 +42,17 @@ async function loadOverview() {
 ================================= */
 
 async function openDiagram(id) {
-  if (!id) return;
-
-  enableEditing();
+  if (!id) return;  
 
   const versionData = await service.loadLatestVersion(id);
   const detailData = await service.getDiagramDetails(id);
 
   currentDiagramId = id;
 
+  enableModeling();
   await loadXML(versionData.bpmn_xml);
 
   ui.renderDiagramDetails(detailData);
-
   ui.showEditor();
 }
 
@@ -131,9 +128,6 @@ async function openHistoryModal(diagramId) {
         .classList.add('hidden');
 
       enableViewing();
-
-      ui.showEditor();
-
       await loadXML(version.bpmn_xml);
 
       ui.renderDiagramDetails({
@@ -147,7 +141,7 @@ async function openHistoryModal(diagramId) {
     onRestore: async (versionId) => {
       const version = await service.getVersionById(versionId);
 
-      enableEditing();
+      enableModeling();
 
       await service.saveVersion(
         currentDiagramId,
@@ -185,7 +179,7 @@ function shareDiagram() {
 async function createNewDiagram(showEditor = true) {
   currentDiagramId = null;
   await newEmptyDiagram();
-  enableEditing();
+  enableModeling();
   ui.resetDiagramDetails();
 
   if (showEditor) ui.showEditor();
@@ -309,7 +303,7 @@ document.getElementById('btnSaveProfile').onclick = async () => {
 document.getElementById('btnReturnToLatest').onclick =
   async () => {
 
-    enableEditing();
+    enableModeling();
 
     const versionData =
       await service.loadLatestVersion(currentDiagramId);

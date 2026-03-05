@@ -1,5 +1,5 @@
-let bpmnInstance;
-let mode = 'edit'; // edit | view
+let bpmnInstance = null;
+let currentMode = null; // "edit" | "view"
 
 function destroyInstance() {
   if (bpmnInstance) {
@@ -8,11 +8,13 @@ function destroyInstance() {
   }
 }
 
-export function initModeler() {
-  enableEditing();
-}
+/* ===============================
+   EDIT MODE
+================================= */
 
-export function enableEditing() {
+export function enableModeling() {
+
+  if (currentMode === "edit") return;
 
   destroyInstance();
 
@@ -20,12 +22,18 @@ export function enableEditing() {
     container: '#canvas'
   });
 
-  mode = 'edit';
+  currentMode = "edit";
 
-  document.getElementById('readOnlyBanner').style.display = 'none';
+  document.getElementById("modeBanner").style.display = "none";
 }
 
+/* ===============================
+   VIEW MODE
+================================= */
+
 export function enableViewing() {
+
+  if (currentMode === "view") return;
 
   destroyInstance();
 
@@ -33,25 +41,47 @@ export function enableViewing() {
     container: '#canvas'
   });
 
-  mode = 'view';
+  currentMode = "view";
 
-  document.getElementById('readOnlyBanner').style.display = 'block';
+  document.getElementById("modeBanner").style.display = "block";
+  document.getElementById("modeBanner").textContent = "Read-Only Mode (Viewing History)";
 }
+
+/* ===============================
+   LOAD XML
+================================= */
 
 export async function loadXML(xml) {
+
+  if (!bpmnInstance) enableModeling();
+
   await bpmnInstance.importXML(xml);
+
+  const canvas = bpmnInstance.get('canvas');
+  canvas.zoom('fit-viewport');
 }
+
+/* ===============================
+   EXPORT XML
+================================= */
 
 export async function getXML() {
 
-  if (mode !== 'edit') {
-    throw new Error('Cannot save while in read-only mode');
-  }
+  if (currentMode !== "edit")
+    throw new Error("Cannot export XML in view mode");
 
-  return (await bpmnInstance.saveXML({ format: true })).xml;
+  const result = await bpmnInstance.saveXML({ format: true });
+
+  return result.xml;
 }
 
+/* ===============================
+   EMPTY DIAGRAM
+================================= */
+
 export async function newEmptyDiagram() {
+
+  enableModeling();
 
   const empty = `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions
