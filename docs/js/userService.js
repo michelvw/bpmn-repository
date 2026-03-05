@@ -1,3 +1,5 @@
+import { supabase } from './supabase.js';
+
 export async function getProfile() {
 
   return await supabase
