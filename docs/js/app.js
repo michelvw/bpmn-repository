@@ -63,7 +63,7 @@ async function saveDiagram() {
 }
 
 /* ===============================
-   VIEW VERSION (READ-ONLY)
+   VIEW VERSION
 ================================= */
 async function viewVersion(version) {
   const versionData = await service.getVersionById(version.id);
@@ -77,7 +77,6 @@ async function viewVersion(version) {
     name: versionData.diagram_name || versionData.name,
     owner: versionData.owner
   }, async () => {
-    // Restore callback
     setReadOnly(false);
     await service.saveVersion(currentDiagramId, versionData.bpmn_xml, `Restored from v${version.version}`);
     const details = await service.getDiagramDetails(currentDiagramId);
@@ -86,20 +85,18 @@ async function viewVersion(version) {
     await loadOverview();
   });
 
-  // Temporarily repurpose Save button
+  // Save button temporarily becomes Restore
   const saveBtn = document.getElementById('btnSave');
-  const originalSaveHandler = saveBtn.onclick;
+  const originalSave = saveBtn.onclick;
   saveBtn.textContent = 'Restore as Latest';
   saveBtn.classList.replace('btn-primary', 'btn-success');
   saveBtn.onclick = () => ui.restoreViewedVersion();
 
-  // Back button restores Save button
-  const backBtn = document.getElementById('btnBack');
-  backBtn.onclick = () => {
+  document.getElementById('btnBack').onclick = () => {
     ui.showOverview();
     saveBtn.textContent = 'Save';
     saveBtn.classList.replace('btn-success', 'btn-primary');
-    saveBtn.onclick = originalSaveHandler;
+    saveBtn.onclick = originalSave;
   };
 }
 

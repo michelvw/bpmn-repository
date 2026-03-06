@@ -6,21 +6,21 @@
    PAGE SHOW/HIDE
 ================================= */
 export function showAuth() {
-  document.getElementById('authPage').classList.remove('d-none');
-  document.getElementById('overviewPage').classList.add('d-none');
-  document.getElementById('editorPage').classList.add('d-none');
+  document.getElementById('authPage').style.display = 'block';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'none';
 }
 
 export function showOverview() {
-  document.getElementById('authPage').classList.add('d-none');
-  document.getElementById('editorPage').classList.add('d-none');
-  document.getElementById('overviewPage').classList.remove('d-none');
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'block';
 }
 
 export function showEditor() {
-  document.getElementById('authPage').classList.add('d-none');
-  document.getElementById('overviewPage').classList.add('d-none');
-  document.getElementById('editorPage').classList.remove('d-none');
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'block';
 }
 
 /* ===============================
@@ -94,7 +94,7 @@ export function resetDiagramDetails() {
 }
 
 /* ===============================
-   VERSION HISTORY
+   VERSION HISTORY MODAL
 ================================= */
 export function renderVersionHistory(versions, handlers) {
   const modalEl = document.getElementById('versionModal');
@@ -143,76 +143,32 @@ export function closeVersionModal() {
 }
 
 /* ===============================
-   VIEWED VERSION
+   VIEWED VERSION (READ-ONLY)
 ================================= */
-let viewedVersionRestoreCallback = null;
+let _restoreCallback = null;
 
-export function showViewedVersion(versionDetails, onRestoreCallback) {
-  viewedVersionRestoreCallback = onRestoreCallback;
+export function showViewedVersion(details, onRestore) {
+  _restoreCallback = onRestore || null;
 
-  // Display name with "(read-only)"
   const nameEl = document.getElementById('diagramName');
-  nameEl.textContent = `${versionDetails.name || 'Unnamed Diagram'} (read-only)`;
+  nameEl.textContent = `${details.name || 'Unnamed diagram'} (read-only)`;
 
-  // Render the diagram details for this version
-  document.getElementById('diagramVersion').textContent = versionDetails.version || '-';
-  document.getElementById('diagramComment').textContent = versionDetails.comment || '-';
-  document.getElementById('diagramOwner').textContent = versionDetails.owner?.username || '-';
-
+  document.getElementById('diagramVersion').textContent = details.version || '-';
+  document.getElementById('diagramComment').textContent = details.comment || '-';
+  document.getElementById('diagramOwner').textContent = details.owner?.username || '-';
   const dateEl = document.getElementById('diagramDate');
-  if(versionDetails.updated_at) {
-    const d = new Date(versionDetails.updated_at);
+  if(details.updated_at) {
+    const d = new Date(details.updated_at);
     dateEl.textContent = isNaN(d) ? '-' : d.toLocaleString();
   } else {
     dateEl.textContent = '-';
   }
 
-  // Show details collapse
   const detailsEl = document.getElementById('diagramDetails');
   const bsCollapse = new bootstrap.Collapse(detailsEl, { toggle: false });
   bsCollapse.show();
 }
 
-/**
- * Allows app.js to restore the currently viewed version.
- */
 export function restoreViewedVersion() {
-  if(viewedVersionRestoreCallback) viewedVersionRestoreCallback();
-}
-
-/* ===============================
-   RENAME HANDLING
-================================= */
-let renameCallback = null;
-
-export function enableRename(currentName, onRename) {
-  renameCallback = onRename;
-  const nameEl = document.getElementById('diagramName');
-  const btn = document.getElementById('btnRename');
-
-  // Replace name with input
-  nameEl.innerHTML = `<input type="text" class="form-control form-control-sm" id="diagramRenameInput" value="${currentName}">`;
-
-  const input = document.getElementById('diagramRenameInput');
-  input.focus();
-  input.select();
-
-  // Change button to Save
-  btn.textContent = 'Save';
-  btn.classList.replace('btn-secondary','btn-success');
-
-  btn.onclick = async () => {
-    const newName = input.value.trim();
-    if(!newName) return alert('Name cannot be empty');
-
-    if(renameCallback) await renameCallback(newName);
-
-    // Restore UI
-    nameEl.textContent = newName;
-    btn.textContent = 'Rename';
-    btn.classList.replace('btn-success','btn-secondary');
-
-    // Rebind original handler
-    btn.onclick = () => enableRename(newName, renameCallback);
-  };
+  if(_restoreCallback) _restoreCallback();
 }
