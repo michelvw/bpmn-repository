@@ -1,140 +1,266 @@
-/* ===============================
-   UI MODULE
-================================= */
+import {
+  initModeler,
+  newEmptyDiagram,
+  loadXML,
+  getXML,
+  setReadOnly
+} from './modeler.js';
+
+import * as service from './diagramService.js';
+import * as userService from './userService.js';
+import * as ui from './ui.js';
+import { generateShareLink, getSharedDiagramId } from './share.js';
+import { supabase } from './supabase.js';
+
+let currentUser = null;
+let currentDiagramId = null;
+
+initModeler();
 
 /* ===============================
-   PAGE SHOW/HIDE
+   PAGE SWITCHING
 ================================= */
-export function showOverview() {
-  document.getElementById('authPage').classList.add('d-none');
-  document.getElementById('editorPage').classList.add('d-none');
-  document.getElementById('overviewPage').classList.remove('d-none');
+
+function showAuth() {
+  document.getElementById('authPage').style.display = 'block';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'none';
 }
 
-export function showEditor() {
-  document.getElementById('overviewPage').classList.add('d-none');
-  document.getElementById('editorPage').classList.remove('d-none');
+function showOverview() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'block';
+  document.getElementById('editorPage').style.display = 'none';
 }
 
-/* ===============================
-   DIAGRAM TABLE
-================================= */
-export function renderTable(diagrams, onOpen, onDelete, onHistory) {
-  const tbody = document.querySelector('#diagramTable tbody');
-  tbody.innerHTML = '';
-
-  diagrams.forEach(d => {
-    const versions = d.diagram_versions || [];
-    const latestVersion = versions.length ? Math.max(...versions.map(v => v.version)) : 0;
-
-    const row = document.createElement('tr');
-
-    const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
-
-    row.innerHTML = `
-      <td>${d.name}</td>
-      <td>${dateStr}</td>
-      <td>${latestVersion || '-'}</td>
-      <td class="d-flex gap-1">
-        <button class="btn btn-sm btn-primary open-btn">Open</button>
-        <button class="btn btn-sm btn-outline-secondary history-btn">History</button>
-        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
-      </td>
-    `;
-
-    row.querySelector('.open-btn').onclick = () => onOpen(d.id);
-    row.querySelector('.history-btn').onclick = () => onHistory(d.id);
-    row.querySelector('.delete-btn').onclick = () => {
-      if (confirm('Delete this diagram?')) onDelete(d.id);
-    };
-
-    tbody.appendChild(row);
-  });
+function showEditor() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'flex';
 }
 
 /* ===============================
-   DIAGRAM DETAILS
+   OVERVIEW
 ================================= */
-export function renderDiagramDetails(diagram) {
-  document.getElementById('diagramName').textContent = diagram.name || 'New Diagram';
 
-  const versions = diagram.diagram_versions || [];
-  const latest = versions.length
-    ? versions.reduce((a, b) => (a.version > b.version ? a : b))
-    : null;
+async function loadOverview() {
+  const data = await service.getDiagrams();
+  ui.renderTable(
+    data,
+    openDiagram,
+    async (id) => { await service.deleteDiagram(id); await loadOverview(); },
+    async (id) => { await openHistoryModal(id); }
+  );
+  showOverview();
+}
 
-  document.getElementById('diagramVersion').textContent = latest?.version || '-';
-  document.getElementById('diagramComment').textContent = latest?.comment || '-';
-  document.getElementById('diagramOwner').textContent = diagram.owner?.username || '-';
+/* ===============================
+   OPEN DIAGRAM
+================================= */
 
-  const dateEl = document.getElementById('diagramDate');
-  if (diagram.updated_at) {
-    const d = new Date(diagram.updated_at);
-    dateEl.textContent = isNaN(d) ? '-' : d.toLocaleString();
-  } else {
-    dateEl.textContent = '-';
+async function openDiagram(id) {
+  if (!id) return;
+
+  const versionData = await service.loadLatestVersion(id);
+  const detailData = await service.getDiagramDetails(id);
+
+  currentDiagramId = id;
+
+  await loadXML(versionData.bpmn_xml);
+
+  ui.renderDiagramDetails(detailData);
+  setReadOnly(false);
+  showEditor();
+}
+
+/* ===============================
+   SAVE DIAGRAM
+================================= */
+
+async function saveDiagram() {
+  if (!currentDiagramId) {
+    const name = prompt('Diagram name:');
+    if (!name) return;
+    const data = await service.createDiagram(name);
+    currentDiagramId = data.id;
   }
 
-  // show collapse
-  const detailsEl = document.getElementById('diagramDetails');
-  const bsCollapse = new bootstrap.Collapse(detailsEl, { toggle: false });
-  bsCollapse.show();
-}
+  const xml = await getXML();
+  const comment = prompt('Version comment:');
+  if (!comment) return;
 
-export function resetDiagramDetails() {
-  document.getElementById('diagramName').textContent = 'New Diagram';
-  document.getElementById('diagramVersion').textContent = '-';
-  document.getElementById('diagramComment').textContent = '-';
-  document.getElementById('diagramOwner').textContent = '-';
-  document.getElementById('diagramDate').textContent = '-';
+  await service.saveVersion(currentDiagramId, xml, comment);
+
+  const details = await service.getDiagramDetails(currentDiagramId);
+  ui.renderDiagramDetails(details);
+
+  await loadOverview();
+  alert('Saved');
 }
 
 /* ===============================
-   VERSION HISTORY
+   DELETE
 ================================= */
-export function renderVersionHistory(versions, handlers) {
-  const modalEl = document.getElementById('versionModal');
-  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-  const container = document.getElementById('versionList');
-  container.innerHTML = '';
 
-  versions.forEach(v => {
-    const card = document.createElement('div');
-    card.className = 'card mb-2';
+async function deleteCurrent() {
+  if (!currentDiagramId) return;
+  if (!confirm('Delete diagram?')) return;
 
-    const createdAt = v.created_at ? new Date(v.created_at) : null;
-    const dateStr = createdAt && !isNaN(createdAt) ? createdAt.toLocaleString() : '-';
+  await service.deleteDiagram(currentDiagramId);
+  currentDiagramId = null;
+  await loadOverview();
+}
 
-    card.innerHTML = `
-      <div class="card-body">
-        <h6 class="card-title mb-1">Version ${v.version}</h6>
-        <h6 class="card-subtitle text-muted mb-2">${dateStr}</h6>
-        <p class="card-text mb-2">${v.comment || '-'}</p>
-        <div class="d-flex gap-1">
-          <button class="btn btn-sm btn-outline-primary view-btn">View</button>
-          <button class="btn btn-sm btn-success restore-btn">Restore as Latest</button>
-        </div>
-      </div>
-    `;
+/* ===============================
+   HISTORY
+================================= */
 
-    card.querySelector('.view-btn').onclick = () => handlers.onView(v);
-    card.querySelector('.restore-btn').onclick = () => handlers.onRestore(v);
+async function openHistoryModal(diagramId) {
+  if (!diagramId) {
+    alert('No diagram selected.');
+    return;
+  }
 
-    container.appendChild(card);
+  currentDiagramId = diagramId;
+  const history = await service.getVersionHistory(diagramId);
+
+  ui.renderVersionHistory(history, {
+    onView: async (version) => {
+      const versionData = await service.getVersionById(version.id);
+      ui.closeVersionModal();
+      showEditor();
+      await loadXML(versionData.bpmn_xml);
+      setReadOnly(true);
+      ui.showViewedVersion({ ...version, ...versionData });
+    },
+    onRestore: async (version) => {
+      const versionData = await service.getVersionById(version.id);
+      setReadOnly(false);
+      await service.saveVersion(
+        currentDiagramId,
+        versionData.bpmn_xml,
+        `Restored from v${version.version}`
+      );
+      const details = await service.getDiagramDetails(currentDiagramId);
+      ui.renderDiagramDetails(details);
+      ui.closeVersionModal();
+      await loadOverview();
+    }
   });
 
-  modal.show();
-}
-
-export function closeVersionModal() {
+  // Show Bootstrap modal
   const modalEl = document.getElementById('versionModal');
-  const bsModal = bootstrap.Modal.getInstance(modalEl);
-  if (bsModal) bsModal.hide();
+  const bsModal = new bootstrap.Modal(modalEl);
+  bsModal.show();
 }
 
 /* ===============================
-   VIEWED VERSION
+   SHARE
 ================================= */
-export function showViewedVersion(details) {
-  renderDiagramDetails(details);
+
+function shareDiagram() {
+  if (!currentDiagramId) return;
+  alert(generateShareLink(currentDiagramId));
 }
+
+/* ===============================
+   NEW DIAGRAM
+================================= */
+
+async function createNewDiagram(showEditorPage = true) {
+  currentDiagramId = null;
+  await newEmptyDiagram();
+  setReadOnly(false);
+  ui.resetDiagramDetails();
+  if (showEditorPage) showEditor();
+}
+
+/* ===============================
+   AUTH
+================================= */
+
+async function handleLogin(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return alert(error.message);
+
+  currentUser = data.user;
+  await loadOverview();
+}
+
+async function handleSignup(email, password) {
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) return alert(error.message);
+  alert('User created. You can log in.');
+}
+
+/* ===============================
+   EVENT BINDINGS
+================================= */
+
+// Buttons
+document.getElementById('btnSave').onclick = saveDiagram;
+document.getElementById('btnBack').onclick = loadOverview;
+document.getElementById('btnShare').onclick = shareDiagram;
+document.getElementById('btnDelete').onclick = deleteCurrent;
+document.getElementById('btnHistory').onclick = () => openHistoryModal(currentDiagramId);
+document.getElementById('btnNewOverview').onclick = () => createNewDiagram(true);
+document.getElementById('btnNewInside').onclick = () => createNewDiagram(false);
+
+document.getElementById('btnSignup').onclick = () =>
+  handleSignup(
+    document.getElementById('emailInput').value,
+    document.getElementById('passwordInput').value
+  );
+
+document.getElementById('btnLogin').onclick = () =>
+  handleLogin(
+    document.getElementById('emailInput').value,
+    document.getElementById('passwordInput').value
+  );
+
+document.getElementById('btnLogout').onclick = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) return alert(error.message);
+  currentUser = null;
+  showAuth();
+};
+
+// Profile modal
+document.getElementById('btnProfile').onclick = async () => {
+  const { data } = await userService.getProfile();
+  document.getElementById('profileUsername').value = data.username || '';
+  const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+  profileModal.show();
+};
+
+document.getElementById('btnSaveProfile').onclick = async () => {
+  const username = document.getElementById('profileUsername').value.trim();
+  if (!username) return alert('Username required');
+  await userService.updateProfile(username);
+  alert('Profile updated');
+  const profileModalEl = document.getElementById('profileModal');
+  const bsModal = bootstrap.Modal.getInstance(profileModalEl);
+  if (bsModal) bsModal.hide();
+};
+
+/* ===============================
+   STARTUP
+================================= */
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const sharedId = getSharedDiagramId();
+  const { data: sessionData } = await supabase.auth.getSession();
+
+  if (sessionData.session) {
+    currentUser = sessionData.session.user;
+
+    if (sharedId) {
+      await openDiagram(sharedId);
+      setReadOnly(true);
+    } else {
+      await loadOverview();
+    }
+  } else {
+    showAuth();
+  }
+});

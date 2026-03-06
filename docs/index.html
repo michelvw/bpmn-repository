@@ -20,7 +20,7 @@
       background-color: #f8f9fa;
     }
 
-    /* Auth page styling */
+    /* AUTH PAGE */
     #authPage {
       max-width: 400px;
       margin: 3rem auto;
@@ -33,25 +33,44 @@
       margin-bottom: 1rem;
     }
 
-    /* Editor page layout */
-    #editorPage {
-      display: flex;
-      flex-direction: column;
-      height: 100vh; /* full viewport */
+    /* OVERVIEW PAGE */
+    #overviewPage {
       padding: 1rem;
     }
 
-    /* Toolbar and canvas */
+    /* EDITOR PAGE */
+    #editorPage {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 1rem;
+    }
+
+    /* Diagram header with name + rename button */
+    #editorPage .diagram-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    #diagramName {
+      margin: 0;
+      word-break: break-word;
+    }
+
+    /* Toolbar */
     .editor-toolbar {
       margin-bottom: 0.5rem;
     }
+
+    /* BPMN canvas */
     #canvas {
-      flex: 1; /* fills remaining space */
+      flex: 1;
       border: 1px solid #ccc;
       background-color: white;
     }
 
-    /* Collapsible diagram details */
+    /* Diagram details collapse */
     #diagramDetails .card-body p {
       margin: 0.25rem 0;
     }
@@ -102,9 +121,9 @@
 
   <!-- EDITOR PAGE -->
   <div id="editorPage" class="container-fluid" style="display:none">
-    <div class="d-flex align-items-center justify-content-between mb-2">
-      <h2 id="diagramName" class="m-0"></h2>
-      <button id="btnRename" class="btn btn-secondary">Rename</button>
+    <div class="diagram-header">
+      <h2 id="diagramName"></h2>
+      <button id="btnRename" class="btn btn-secondary btn-sm">Rename</button>
     </div>
 
     <!-- Toolbar -->
@@ -137,7 +156,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Version History</h5>
-          <button id="closeVersionModal" class="btn-close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="versionList"></div>
       </div>
@@ -150,7 +169,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">User Profile</h5>
-          <button id="closeProfileModal" class="btn-close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
@@ -164,8 +183,8 @@
   </div>
 
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="./bpmn-modeler.production.min.js"></script>
   <script type="module" src="./js/app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
