@@ -6,21 +6,21 @@
    PAGE SHOW/HIDE
 ================================= */
 export function showAuth() {
-  document.getElementById('authPage').style.display = 'block';
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'none';
+  document.getElementById('authPage').classList.remove('d-none');
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.add('d-none');
 }
 
 export function showOverview() {
-  document.getElementById('authPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'none';
-  document.getElementById('overviewPage').style.display = 'block';
+  document.getElementById('authPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.add('d-none');
+  document.getElementById('overviewPage').classList.remove('d-none');
 }
 
 export function showEditor() {
-  document.getElementById('authPage').style.display = 'none';
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'block';
+  document.getElementById('authPage').classList.add('d-none');
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.remove('d-none');
 }
 
 /* ===============================
