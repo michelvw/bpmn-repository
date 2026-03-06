@@ -63,6 +63,47 @@ async function saveDiagram() {
 }
 
 /* ===============================
+   VIEW VERSION (READ-ONLY)
+================================= */
+async function viewVersion(version) {
+  const versionData = await service.getVersionById(version.id);
+
+  await loadXML(versionData.bpmn_xml);
+  setReadOnly(true);
+  ui.showEditor();
+
+  ui.showViewedVersion({
+    ...versionData,
+    name: versionData.diagram_name || versionData.name,
+    owner: versionData.owner
+  }, async () => {
+    // Restore callback
+    setReadOnly(false);
+    await service.saveVersion(currentDiagramId, versionData.bpmn_xml, `Restored from v${version.version}`);
+    const details = await service.getDiagramDetails(currentDiagramId);
+    ui.renderDiagramDetails(details);
+    alert('Version restored as latest');
+    await loadOverview();
+  });
+
+  // Temporarily repurpose Save button
+  const saveBtn = document.getElementById('btnSave');
+  const originalSaveHandler = saveBtn.onclick;
+  saveBtn.textContent = 'Restore as Latest';
+  saveBtn.classList.replace('btn-primary', 'btn-success');
+  saveBtn.onclick = () => ui.restoreViewedVersion();
+
+  // Back button restores Save button
+  const backBtn = document.getElementById('btnBack');
+  backBtn.onclick = () => {
+    ui.showOverview();
+    saveBtn.textContent = 'Save';
+    saveBtn.classList.replace('btn-success', 'btn-primary');
+    saveBtn.onclick = originalSaveHandler;
+  };
+}
+
+/* ===============================
    HISTORY
 ================================= */
 async function openHistoryModal(diagramId) {
@@ -73,12 +114,8 @@ async function openHistoryModal(diagramId) {
 
   ui.renderVersionHistory(history, {
     onView: async (version) => {
-      const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
-      ui.showEditor();
-      await loadXML(versionData.bpmn_xml);
-      setReadOnly(true);
-      ui.showViewedVersion({ ...version, ...versionData });
+      await viewVersion(version);
     },
     onRestore: async (version) => {
       const versionData = await service.getVersionById(version.id);

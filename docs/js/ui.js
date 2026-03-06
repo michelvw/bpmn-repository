@@ -145,8 +145,39 @@ export function closeVersionModal() {
 /* ===============================
    VIEWED VERSION
 ================================= */
-export function showViewedVersion(details) {
-  renderDiagramDetails(details);
+let viewedVersionRestoreCallback = null;
+
+export function showViewedVersion(versionDetails, onRestoreCallback) {
+  viewedVersionRestoreCallback = onRestoreCallback;
+
+  // Display name with "(read-only)"
+  const nameEl = document.getElementById('diagramName');
+  nameEl.textContent = `${versionDetails.name || 'Unnamed Diagram'} (read-only)`;
+
+  // Render the diagram details for this version
+  document.getElementById('diagramVersion').textContent = versionDetails.version || '-';
+  document.getElementById('diagramComment').textContent = versionDetails.comment || '-';
+  document.getElementById('diagramOwner').textContent = versionDetails.owner?.username || '-';
+
+  const dateEl = document.getElementById('diagramDate');
+  if(versionDetails.updated_at) {
+    const d = new Date(versionDetails.updated_at);
+    dateEl.textContent = isNaN(d) ? '-' : d.toLocaleString();
+  } else {
+    dateEl.textContent = '-';
+  }
+
+  // Show details collapse
+  const detailsEl = document.getElementById('diagramDetails');
+  const bsCollapse = new bootstrap.Collapse(detailsEl, { toggle: false });
+  bsCollapse.show();
+}
+
+/**
+ * Allows app.js to restore the currently viewed version.
+ */
+export function restoreViewedVersion() {
+  if(viewedVersionRestoreCallback) viewedVersionRestoreCallback();
 }
 
 /* ===============================
