@@ -2,313 +2,169 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Rijk Zwaan BPMN Editor</title>
+  <title>BPMN Repository</title>
   <link rel="stylesheet" href="./css/diagram-js.css">
   <link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
   <style>
-    html, body { height: 100%; margin: 0; }
-    #canvas { width: 100%; height: 85vh; border: 1px solid #ccc; }
-    #controls { height: 15vh; padding: 5px; display: flex; gap: 10px; align-items: center; }
-  </style>
+  body { font-family: Arial, sans-serif; margin: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  th {
+    text-align: left;
+    font-weight: bold;
+    padding: 8px;
+    border-bottom: 2px solid #ccc;
+  }
+
+  td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+  }
+  button { padding: 5px 10px; cursor: pointer; }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: white;
+    width: 600px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 6px;
+    padding: 15px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .hidden { display: none; }
+
+  .version-card {
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+
+  .version-card small {
+    color: gray;
+  }
+
+  #editorPage h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #editorPage input {
+    font-size: 1.2em;
+  }
+</style>
 </head>
 <body>
 
-<div id="initialPage">
-  <button id="newDiagram">New Diagram</button>
-  <h2>Your Diagrams</h2>
-  <table id="diagramOverview">
+<div id="authPage">
+  <h2>Login</h2>
+  <input id="emailInput" type="email" placeholder="Email">
+  <input id="passwordInput" type="password" placeholder="Password">
+  <button id="btnLogin">Login</button>
+  <button id="btnSignup">Sign Up</button>
+</div>
+
+<div id="overviewPage">
+  <button id="btnNewOverview">New Diagram</button>
+  <button id="btnProfile">Profile</button>
+  <button id="btnLogout">Logout</button>
+  <table id="diagramTable">
     <thead>
       <tr>
         <th>Name</th>
         <th>Last Modified</th>
-        <th>Latest Version</th>
+        <th>Version</th>
         <th>Action</th>
       </tr>
     </thead>
-    <tbody>
-      <!-- Diagrams will be dynamically populated here -->
-    </tbody>
+    <tbody></tbody>
   </table>
 </div>
 
-<div id="modelerPage" style="display: none;">
-  <div id="canvas"></div>
-  <div id="modelerControls">
-    <button id="newDiagram">New Diagram</button>
-    <button id="saveDiagram">Save Diagram</button>
-    <button id="backToOverview">Open Diagram</button>
+<div id="editorPage" style="display:none">
+
+ <h2>
+  <span id="diagramName"></span>
+  <button id="btnRename">Rename</button>
+</h2>
+
+  <div id="canvas" style="height:70vh;border:1px solid #ccc"></div>
+
+  <div>
+    <button id="btnSave">Save</button>
+    <button id="btnBack">Back</button>
+    <button id="btnShare">Share</button>
+    <button id="btnNewInside">New</button>
+    <button id="btnDelete">Delete</button>
+    <button id="btnHistory">History</button>
   </div>
-  <div id="diagramDetails" style="margin-top: 10px;">
-      <p><strong>Name:</strong> <span id="diagramName">N/A</span> <button id="editDiagramName">Edit</button></p>
-      <p><strong>Version:</strong> <span id="diagramVersion">N/A</span></p>
-      <p><strong>Comment:</strong> <span id="diagramComment">N/A</span></p>
-      <p><strong>Owner:</strong> <span id="diagramOwner">N/A</span></p>
-      <p><strong>Last Modified:</strong> <span id="diagramDate">N/A</span></p>
+
+  <div id="diagramDetails" style="margin-top:10px;">
+    <p>Version: <span id="diagramVersion">-</span></p>
+    <p>Comment: <span id="diagramComment">-</span></p>
+    <p>Owner: <span id="diagramOwner">-</span></p>
+    <p>Last Modified: <span id="diagramDate">-</span></p>
+  </div>
+
+</div>
+
+<div id="versionModal" class="modal hidden">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h3>Version History</h3>
+      <button id="closeVersionModal">✕</button>
     </div>
+
+    <div id="versionList"></div>
+
+  </div>
+</div>
+
+<div id="profileModal" class="modal hidden">
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h3>User Profile</h3>
+      <button id="closeProfileModal">✕</button>
+    </div>
+
+    <div>
+      <label>Username</label>
+      <input id="profileUsername" type="text">
+    </div>
+
+    <div style="margin-top:10px">
+      <button id="btnSaveProfile">Save</button>
+    </div>
+
+  </div>
 </div>
 
 <script src="./bpmn-modeler.production.min.js"></script>
-
-<script type="module">
-  import { saveDiagram } from './DiagramService.js';
-  import { changeDiagramName } from './DiagramService.js';
-  import { deleteDiagram } from './DiagramService.js';
-  import { supabase } from './supabase.js';
-
-  const modeler = new window.BpmnJS({ container: '#canvas' });
-  let DIAGRAM_ID = null;
-  const USER_ID = '78448143-9372-4636-9e2c-32e165b615d6'; // Temporary test user UUID
-
-  const EMPTY_DIAGRAM_XML = `<?xml version="1.0" encoding="UTF-8"?>
-  <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-                    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-                    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-                    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-                    id="Definitions_1"
-                    targetNamespace="http://bpmn.io/schema/bpmn">
-    <bpmn:process id="Process_1" isExecutable="false"/>
-    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-      <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1"/>
-    </bpmndi:BPMNDiagram>
-  </bpmn:definitions>`;
-
-  // --- NEW DIAGRAM ---
-  document.getElementById('newDiagram').addEventListener('click', async () => {
-    try {
-      await modeler.importXML(EMPTY_DIAGRAM_XML);
-      DIAGRAM_ID = null;
-      document.getElementById('initialPage').style.display = 'none';
-      document.getElementById('modelerPage').style.display = 'block';
-
-      // Clear diagram details for a new diagram
-      document.getElementById('diagramName').textContent = '';
-      document.getElementById('diagramVersion').textContent = '';
-      document.getElementById('diagramComment').textContent = '';
-      document.getElementById('diagramOwner').textContent = '';
-      document.getElementById('diagramDate').textContent = '';
-    } catch (error) {
-      console.error('Error starting new diagram:', error);
-    }
-  });
-
-  // --- SAVE DIAGRAM ---
-  document.getElementById('saveDiagram').addEventListener('click', async () => {
-    try {
-      const { xml } = await modeler.saveXML({ format: true });
-      const comment = prompt('Enter a comment for this version:');
-      if (!comment) return;
-
-      if (!DIAGRAM_ID) {
-        if (document.getElementById('diagramName').textContent == '') {
-          const name = prompt('Enter diagram name:');
-        }
-        else {
-          const name = document.getElementById('diagramName').textContent;    
-        }  
-        
-        const { data, error } = await supabase
-          .from('diagrams')
-          .insert({ name, owner_id: USER_ID })
-          .select('id')
-          .single();
-        if (error) throw error;
-
-        DIAGRAM_ID = data.id;
-      }
-
-      await saveDiagram(DIAGRAM_ID, USER_ID, xml, comment);
-      updateDiagramDetails(DIAGRAM_ID); // Reload diagram details after saving
-      loadDiagrams();
-    } catch (err) {
-      console.error(err);
-      alert('Save failed.');
-    }
-  });
-
-  // --- BACK TO OVERVIEW ---
-  document.getElementById('backToOverview').addEventListener('click', () => {
-    document.getElementById('modelerPage').style.display = 'none';
-    document.getElementById('initialPage').style.display = 'block';
-    loadDiagrams();
-  });
-
-  // --- LOAD DIAGRAMS INTO TABLE ---
-  async function loadDiagrams() {
-    try {
-      const { data: diagrams, error } = await supabase
-        .from('diagrams')
-        .select('id, name, updated_at, diagram_versions(version)')
-        .eq('owner_id', USER_ID)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-
-      const tbody = document.querySelector('#diagramOverview tbody');
-      tbody.innerHTML = '';
-
-      diagrams.forEach(diagram => {
-        const latestVersion = diagram.diagram_versions?.length
-          ? Math.max(...diagram.diagram_versions.map(v => v.version))
-          : 'N/A';
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${diagram.name}</td>
-          <td>${new Date(diagram.updated_at).toLocaleString()}</td>
-          <td>${latestVersion}</td>
-          <td>
-            <button class="openDiagram" data-id="${diagram.id}">Open</button>
-            <button class="deleteDiagram" data-id="${diagram.id}">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-
-      document.querySelectorAll('.openDiagram').forEach(button => {
-        button.addEventListener('click', async (event) => {
-          const diagramId = event.target.dataset.id;
-          const { data: latestVersion, error } = await supabase
-            .from('diagram_versions')
-            .select('bpmn_xml')
-            .eq('diagram_id', diagramId)
-            .order('version', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (error) {
-            console.error(error);
-            alert('Failed to load diagram.');
-            return;
-          }
-
-          if (latestVersion) {
-            await modeler.importXML(latestVersion.bpmn_xml);
-            DIAGRAM_ID = diagramId;
-            document.getElementById('initialPage').style.display = 'none';
-            document.getElementById('modelerPage').style.display = 'block';
-            updateDiagramDetails(diagramId); // Update diagram details when a diagram is loaded
-          }
-        });
-      });
-
-      document.querySelectorAll('.deleteDiagram').forEach(button => {
-        button.addEventListener('click', async (event) => {
-          const diagramId = event.target.dataset.id;
-          const confirmDelete = confirm('Are you sure you want to delete this diagram? This action cannot be undone.');
-
-          if (confirmDelete) {
-            const success = await deleteDiagram(diagramId);
-
-            if (success) {
-              alert('Diagram deleted successfully.');
-              loadDiagrams(); // Refresh the table
-            } else {
-              alert('Failed to delete the diagram.');
-            }
-          }
-        });
-      });
-
-    } catch (err) {
-      console.error('Error loading diagrams:', err);
-    }
-  }
-
-  // --- UPDATE DIAGRAM DETAILS ---
-  async function updateDiagramDetails(diagramId) {
-    try {
-      const { data: diagram, error } = await supabase
-        .from('diagrams')
-        .select('name, owner_id, updated_at')
-        .eq('id', diagramId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching diagram details:', error);
-        return;
-      }
-
-      const { data: owner, error: ownerError } = await supabase
-        .from('users')
-        .select('username')
-        .eq('id', diagram.owner_id)
-        .single();
-
-      if (ownerError) {
-        console.error('Error fetching owner details:', ownerError);
-        return;
-      }
-
-      const { data: latestVersion, error: versionError } = await supabase
-        .from('diagram_versions')
-        .select('version, comment')
-        .eq('diagram_id', diagramId)
-        .order('version', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (versionError) {
-        console.error('Error fetching latest version details:', versionError);
-        return;
-      }
-
-      document.getElementById('diagramName').textContent = diagram.name || 'N/A';
-      document.getElementById('diagramVersion').textContent = latestVersion?.version || 'N/A';
-      document.getElementById('diagramComment').textContent = latestVersion?.comment || 'N/A';
-      document.getElementById('diagramOwner').textContent = owner?.username || 'N/A';
-      document.getElementById('diagramDate').textContent = new Date(diagram.updated_at).toLocaleString() || 'N/A';
-    } catch (err) {
-      console.error('Error updating diagram details:', err);
-    }
-  }
-
-  // --- EDIT DIAGRAM NAME ---
-  document.getElementById('editDiagramName').addEventListener('click', () => {
-    const diagramNameSpan = document.getElementById('diagramName');
-    const currentName = diagramNameSpan.textContent;
-    const editButton = document.getElementById('editDiagramName');
-
-    // Replace the span with an input box
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = currentName;
-    input.id = 'diagramNameInput';
-
-    diagramNameSpan.replaceWith(input);
-    editButton.style.display = 'none'; // Hide the edit button while editing
-    input.focus();
-
-    // Save changes on blur
-    input.addEventListener('blur', async () => {
-      const newName = input.value.trim();
-
-      if (newName && newName !== currentName) {
-        const success = await changeDiagramName(DIAGRAM_ID, newName);
-
-        if (success) {
-          // Update the span with the new name
-          const updatedSpan = document.createElement('span');
-          updatedSpan.id = 'diagramName';
-          updatedSpan.textContent = newName;
-          input.replaceWith(updatedSpan);
-
-          editButton.style.display = 'inline'; // Show the edit button again
-        } else {
-          alert('Failed to update the diagram name.');
-          input.replaceWith(diagramNameSpan); // Revert to the original span
-          editButton.style.display = 'inline';
-        }
-      } else {
-        // Revert back to the original span if no changes
-        input.replaceWith(diagramNameSpan);
-        editButton.style.display = 'inline';
-      }
-    });
-  });
-
-  // --- INITIAL LOAD ---
-  loadDiagrams();
-</script>
+<script type="module" src="./js/app.js"></script>
 
 </body>
 </html>

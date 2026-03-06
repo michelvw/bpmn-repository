@@ -1,11 +1,11 @@
 export function showOverview() {
-  document.getElementById('overviewPage').style.display = 'block';
-  document.getElementById('editorPage').style.display = 'none';
+  overviewPage.style.display = 'block';
+  editorPage.style.display = 'none';
 }
 
 export function showEditor() {
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'block';
+  overviewPage.style.display = 'none';
+  editorPage.style.display = 'block';
 }
 
 export function renderTable(diagrams, onOpen, onDelete, onHistory) {
@@ -35,7 +35,7 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
     row.querySelector('.open-btn').onclick = () => onOpen(d.id);
 
     row.querySelector('.history-btn').onclick =
-      () => onHistory(d.id);
+  () => onHistory(d.id);
 
     row.querySelector('.delete-btn').onclick = () => {
       if (confirm('Delete this diagram?')) {
@@ -47,7 +47,6 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
   });
 }
 
-
 export function renderDiagramDetails(diagram) {
 
   document.getElementById('diagramName').textContent = diagram.name;
@@ -55,19 +54,11 @@ export function renderDiagramDetails(diagram) {
   const versions = diagram.diagram_versions || [];
 
   if (versions.length) {
+    const latest = versions.reduce((a, b) => a.version > b.version ? a : b);
 
-    const latest =
-      versions.reduce((a, b) =>
-        a.version > b.version ? a : b);
-
-    document.getElementById('diagramVersion').textContent =
-      latest.version;
-
-    document.getElementById('diagramComment').textContent =
-      latest.comment || '-';
-
+    document.getElementById('diagramVersion').textContent = latest.version;
+    document.getElementById('diagramComment').textContent = latest.comment || '-';
   } else {
-
     document.getElementById('diagramVersion').textContent = '-';
     document.getElementById('diagramComment').textContent = '-';
   }
@@ -79,20 +70,6 @@ export function renderDiagramDetails(diagram) {
     new Date(diagram.updated_at).toLocaleString();
 }
 
-
-export function showViewedVersion(version) {
-
-  document.getElementById('diagramVersion').textContent =
-    version.version;
-
-  document.getElementById('diagramComment').textContent =
-    version.comment || '-';
-
-  document.getElementById('diagramDate').textContent =
-    new Date(version.created_at).toLocaleString();
-}
-
-
 export function resetDiagramDetails() {
 
   document.getElementById('diagramName').textContent = 'New Diagram';
@@ -102,16 +79,14 @@ export function resetDiagramDetails() {
   document.getElementById('diagramDate').textContent = '-';
 }
 
-
 export function renderVersionHistory(versions, handlers) {
 
   const modal = document.getElementById('versionModal');
   const container = document.getElementById('versionList');
 
-  container.innerHTML = '';
+  container.innerHTML = ''; // ensure full reset
 
   versions.forEach(v => {
-
     const card = document.createElement('div');
     card.className = 'version-card';
 
@@ -124,23 +99,13 @@ export function renderVersionHistory(versions, handlers) {
     `;
 
     card.querySelector('.view-btn').onclick =
-      () => handlers.onView(v);
+      () => handlers.onView(v.id);
 
     card.querySelector('.restore-btn').onclick =
-      () => handlers.onRestore(v);
+      () => handlers.onRestore(v.id);
 
     container.appendChild(card);
   });
 
   modal.classList.remove('hidden');
-}
-
-
-export function closeVersionModal() {
-
-  const modal = document.getElementById('versionModal');
-  const container = document.getElementById('versionList');
-
-  container.innerHTML = '';
-  modal.classList.add('hidden');
 }

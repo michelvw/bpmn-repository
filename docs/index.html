@@ -1,95 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BPMN Repository</title>
-  <link rel="stylesheet" href="./css/diagram-js.css">
-  <link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
-  <style>
-  body { font-family: Arial, sans-serif; margin: 0; }
+<meta charset="UTF-8">
+<title>BPMN Repository</title>
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-  }
+<link rel="stylesheet" href="./css/diagram-js.css">
+<link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
 
-  th {
-    text-align: left;
-    font-weight: bold;
-    padding: 8px;
-    border-bottom: 2px solid #ccc;
-  }
+<style>
+body { font-family: Arial, sans-serif; margin: 0; }
 
-  td {
-    padding: 8px;
-    border-bottom: 1px solid #eee;
-  }
-  button { padding: 5px 10px; cursor: pointer; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
 
-  .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+th {
+  text-align: left;
+  font-weight: bold;
+  padding: 8px;
+  border-bottom: 2px solid #ccc;
+}
 
-  .modal-content {
-    background: white;
-    width: 600px;
-    max-height: 70vh;
-    overflow-y: auto;
-    border-radius: 6px;
-    padding: 15px;
-  }
+td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
 
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+button { padding: 5px 10px; cursor: pointer; }
 
-  .hidden { display: none; }
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
-  .version-card {
-    padding: 10px;
-    border: 1px solid #ddd;
-    margin-bottom: 10px;
-    border-radius: 4px;
-  }
+.modal-content {
+  background: white;
+  width: 600px;
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 6px;
+  padding: 15px;
+}
 
-  .version-card small {
-    color: gray;
-  }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  #editorPage h2 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
+.hidden { display: none; }
 
-  #editorPage input {
-    font-size: 1.2em;
-  }
+.version-card {
+  padding: 10px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.version-card small {
+  color: gray;
+}
+
+#editorPage h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#editorPage input {
+  font-size: 1.2em;
+}
 </style>
 </head>
+
 <body>
 
 <div id="authPage">
   <h2>Login</h2>
+
   <input id="emailInput" type="email" placeholder="Email">
   <input id="passwordInput" type="password" placeholder="Password">
+
   <button id="btnLogin">Login</button>
   <button id="btnSignup">Sign Up</button>
 </div>
 
-<div id="overviewPage">
+
+<div id="overviewPage" style="display:none">
   <button id="btnNewOverview">New Diagram</button>
   <button id="btnProfile">Profile</button>
   <button id="btnLogout">Logout</button>
+
   <table id="diagramTable">
     <thead>
       <tr>
@@ -103,32 +111,34 @@
   </table>
 </div>
 
+
 <div id="editorPage" style="display:none">
 
- <h2>
-  <span id="diagramName"></span>
-  <button id="btnRename">Rename</button>
+<h2>
+<span id="diagramName"></span>
+<button id="btnRename">Rename</button>
 </h2>
 
-  <div id="canvas" style="height:70vh;border:1px solid #ccc"></div>
+<div id="canvas" style="height:70vh;border:1px solid #ccc"></div>
 
-  <div>
-    <button id="btnSave">Save</button>
-    <button id="btnBack">Back</button>
-    <button id="btnShare">Share</button>
-    <button id="btnNewInside">New</button>
-    <button id="btnDelete">Delete</button>
-    <button id="btnHistory">History</button>
-  </div>
+<div>
+  <button id="btnSave">Save</button>
+  <button id="btnBack">Back</button>
+  <button id="btnShare">Share</button>
+  <button id="btnNewInside">New</button>
+  <button id="btnDelete">Delete</button>
+  <button id="btnHistory">History</button>
+</div>
 
-  <div id="diagramDetails" style="margin-top:10px;">
-    <p>Version: <span id="diagramVersion">-</span></p>
-    <p>Comment: <span id="diagramComment">-</span></p>
-    <p>Owner: <span id="diagramOwner">-</span></p>
-    <p>Last Modified: <span id="diagramDate">-</span></p>
-  </div>
+<div id="diagramDetails" style="margin-top:10px;">
+  <p>Version: <span id="diagramVersion">-</span></p>
+  <p>Comment: <span id="diagramComment">-</span></p>
+  <p>Owner: <span id="diagramOwner">-</span></p>
+  <p>Last Modified: <span id="diagramDate">-</span></p>
+</div>
 
 </div>
+
 
 <div id="versionModal" class="modal hidden">
   <div class="modal-content">
@@ -142,6 +152,7 @@
 
   </div>
 </div>
+
 
 <div id="profileModal" class="modal hidden">
   <div class="modal-content">
