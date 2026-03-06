@@ -23,14 +23,24 @@ export async function loadXML(xml) {
   const canvas = modeler.get("canvas");
   const elementRegistry = modeler.get("elementRegistry");
 
+  // Delay until rendering finishes
   setTimeout(() => {
     const elements = elementRegistry.getAll();
 
-    // Only zoom if diagram has more than the root element
-    if (elements.length > 1) {
-      canvas.zoom("fit-viewport");
-    }   
-  }, 0);
+    // Compute bounds of all shapes
+    const bounds = elements
+      .map(e => e.businessObject && e.width && e.height ? e : null)
+      .filter(Boolean)
+      .map(e => canvas.getBBox(e));
+
+    // Only zoom if we have valid bounds
+    if (bounds.length) {
+      const finite = bounds.every(b => isFinite(b.x) && isFinite(b.y) && isFinite(b.width) && isFinite(b.height));
+      if (finite) {
+        canvas.zoom("fit-viewport");
+      }
+    }
+  }, 100); // slightly larger timeout ensures rendering
 }
 
 
