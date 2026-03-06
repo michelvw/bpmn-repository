@@ -1,20 +1,28 @@
+// ui.js
+
+/* ===============================
+      PAGE SHOW/HIDE
+================================= */
+
 export function showOverview() {
-  document.getElementById('overviewPage').style.display = 'block';
-  document.getElementById('editorPage').style.display = 'none';
+  document.getElementById('overviewPage').classList.remove('d-none');
+  document.getElementById('editorPage').classList.add('d-none');
 }
 
 export function showEditor() {
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'block';
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.remove('d-none');
 }
 
-export function renderTable(diagrams, onOpen, onDelete, onHistory) {
+/* ===============================
+      DIAGRAM TABLE
+================================= */
 
+export function renderTable(diagrams, onOpen, onDelete, onHistory) {
   const tbody = document.querySelector('#diagramTable tbody');
   tbody.innerHTML = '';
 
   diagrams.forEach(d => {
-
     const version = d.diagram_versions?.length
       ? Math.max(...d.diagram_versions.map(v => v.version))
       : 0;
@@ -25,76 +33,40 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
       <td>${d.name}</td>
       <td>${new Date(d.updated_at).toLocaleString()}</td>
       <td>${version}</td>
-      <td>
-        <button class="open-btn">Open</button>
-        <button class="history-btn">History</button>
-        <button class="delete-btn">Delete</button>
+      <td class="d-flex gap-1">
+        <button class="btn btn-sm btn-primary open-btn">Open</button>
+        <button class="btn btn-sm btn-outline-secondary history-btn">History</button>
+        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
       </td>
     `;
 
     row.querySelector('.open-btn').onclick = () => onOpen(d.id);
-
-    row.querySelector('.history-btn').onclick =
-      () => onHistory(d.id);
-
+    row.querySelector('.history-btn').onclick = () => onHistory(d.id);
     row.querySelector('.delete-btn').onclick = () => {
-      if (confirm('Delete this diagram?')) {
-        onDelete(d.id);
-      }
+      if (confirm('Delete this diagram?')) onDelete(d.id);
     };
 
     tbody.appendChild(row);
   });
 }
 
+/* ===============================
+      DIAGRAM DETAILS
+================================= */
 
 export function renderDiagramDetails(diagram) {
-
   document.getElementById('diagramName').textContent = diagram.name;
 
   const versions = diagram.diagram_versions || [];
+  const latest = versions.length ? versions.reduce((a, b) => a.version > b.version ? a : b) : null;
 
-  if (versions.length) {
-
-    const latest =
-      versions.reduce((a, b) =>
-        a.version > b.version ? a : b);
-
-    document.getElementById('diagramVersion').textContent =
-      latest.version;
-
-    document.getElementById('diagramComment').textContent =
-      latest.comment || '-';
-
-  } else {
-
-    document.getElementById('diagramVersion').textContent = '-';
-    document.getElementById('diagramComment').textContent = '-';
-  }
-
-  document.getElementById('diagramOwner').textContent =
-    diagram.owner?.username || '-';
-
-  document.getElementById('diagramDate').textContent =
-    new Date(diagram.updated_at).toLocaleString();
+  document.getElementById('diagramVersion').textContent = latest?.version || '-';
+  document.getElementById('diagramComment').textContent = latest?.comment || '-';
+  document.getElementById('diagramOwner').textContent = diagram.owner?.username || '-';
+  document.getElementById('diagramDate').textContent = new Date(diagram.updated_at).toLocaleString();
 }
-
-
-export function showViewedVersion(version) {
-
-  document.getElementById('diagramVersion').textContent =
-    version.version;
-
-  document.getElementById('diagramComment').textContent =
-    version.comment || '-';
-
-  document.getElementById('diagramDate').textContent =
-    new Date(version.created_at).toLocaleString();
-}
-
 
 export function resetDiagramDetails() {
-
   document.getElementById('diagramName').textContent = 'New Diagram';
   document.getElementById('diagramVersion').textContent = '-';
   document.getElementById('diagramComment').textContent = '-';
@@ -102,45 +74,37 @@ export function resetDiagramDetails() {
   document.getElementById('diagramDate').textContent = '-';
 }
 
+/* ===============================
+      VERSION HISTORY
+================================= */
 
 export function renderVersionHistory(versions, handlers) {
-
-  const modal = document.getElementById('versionModal');
+  const modalEl = document.getElementById('versionModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   const container = document.getElementById('versionList');
-
   container.innerHTML = '';
 
   versions.forEach(v => {
-
     const card = document.createElement('div');
-    card.className = 'version-card';
+    card.className = 'card mb-2';
 
     card.innerHTML = `
-      <strong>Version ${v.version}</strong><br>
-      <small>${new Date(v.created_at).toLocaleString()}</small>
-      <p>${v.comment || '-'}</p>
-      <button class="view-btn">View</button>
-      <button class="restore-btn">Restore as Latest</button>
+      <div class="card-body">
+        <h6 class="card-title mb-1">Version ${v.version}</h6>
+        <h6 class="card-subtitle text-muted mb-2">${new Date(v.created_at).toLocaleString()}</h6>
+        <p class="card-text mb-2">${v.comment || '-'}</p>
+        <div class="d-flex gap-1">
+          <button class="btn btn-sm btn-outline-primary view-btn">View</button>
+          <button class="btn btn-sm btn-success restore-btn">Restore as Latest</button>
+        </div>
+      </div>
     `;
 
-    card.querySelector('.view-btn').onclick =
-      () => handlers.onView(v);
-
-    card.querySelector('.restore-btn').onclick =
-      () => handlers.onRestore(v);
+    card.querySelector('.view-btn').onclick = () => handlers.onView(v.id);
+    card.querySelector('.restore-btn').onclick = () => handlers.onRestore(v.id);
 
     container.appendChild(card);
   });
 
-  modal.classList.remove('hidden');
-}
-
-
-export function closeVersionModal() {
-
-  const modal = document.getElementById('versionModal');
-  const container = document.getElementById('versionList');
-
-  container.innerHTML = '';
-  modal.classList.add('hidden');
+  modal.show();
 }
