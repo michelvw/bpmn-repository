@@ -1,69 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>BPMN Repository</title>
+  <meta charset="UTF-8">
+  <title>BPMN Repository</title>
 
-<!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- BPMN libraries -->
-<link rel="stylesheet" href="./css/diagram-js.css">
-<link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
+  <!-- BPMN libraries -->
+  <link rel="stylesheet" href="./css/diagram-js.css">
+  <link rel="stylesheet" href="./css/bpmn-font/css/bpmn-embedded.css">
 
-<!-- Favicon -->
-<link rel="icon" type="image/x-icon" href="./favicon.ico">
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
 
-<style>
-  /* Minimal custom styles */
-  #canvas {
-    min-height: 70vh;
-  }
-</style>
+  <style>
+    body {
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    /* Auth page styling */
+    #authPage {
+      max-width: 400px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    #authPage input {
+      margin-bottom: 1rem;
+    }
+
+    /* Editor page layout */
+    #editorPage {
+      display: flex;
+      flex-direction: column;
+      height: 100vh; /* full viewport */
+      padding: 1rem;
+    }
+
+    /* Toolbar and canvas */
+    .editor-toolbar {
+      margin-bottom: 0.5rem;
+    }
+    #canvas {
+      flex: 1; /* fills remaining space */
+      border: 1px solid #ccc;
+      background-color: white;
+    }
+
+    /* Collapsible diagram details */
+    #diagramDetails .card-body p {
+      margin: 0.25rem 0;
+    }
+
+    /* Version modal adjustments */
+    .version-card {
+      margin-bottom: 0.5rem;
+    }
+  </style>
 </head>
 
-<body class="bg-light">
-
-<!-- ===============================
-      AUTH PAGE
-================================= -->
-<div id="authPage" class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-md-4">
-      <h2 class="mb-4 text-center">Login</h2>
-      <div class="mb-3">
-        <input id="emailInput" type="email" class="form-control" placeholder="Email">
-      </div>
-      <div class="mb-3">
-        <input id="passwordInput" type="password" class="form-control" placeholder="Password">
-      </div>
-      <div class="d-flex justify-content-between">
-        <button id="btnLogin" class="btn btn-primary w-50 me-2">Login</button>
-        <button id="btnSignup" class="btn btn-outline-primary w-50 ms-2">Sign Up</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===============================
-      OVERVIEW PAGE
-================================= -->
-<div id="overviewPage" class="container py-4 d-none">
-
-  <div class="d-flex justify-content-between mb-3">
-    <div>
-      <button id="btnNewOverview" class="btn btn-success me-2">New Diagram</button>
-    </div>
-    <div>
-      <button id="btnProfile" class="btn btn-secondary me-2">Profile</button>
-      <button id="btnLogout" class="btn btn-danger">Logout</button>
+<body>
+  <!-- AUTH PAGE -->
+  <div id="authPage" class="container">
+    <h2 class="mb-3">Login</h2>
+    <input id="emailInput" type="email" class="form-control" placeholder="Email">
+    <input id="passwordInput" type="password" class="form-control" placeholder="Password">
+    <div class="mt-3 d-flex gap-2">
+      <button id="btnLogin" class="btn btn-primary flex-grow-1">Login</button>
+      <button id="btnSignup" class="btn btn-secondary flex-grow-1">Sign Up</button>
     </div>
   </div>
 
-  <div class="table-responsive">
-    <table id="diagramTable" class="table table-hover table-bordered align-middle">
-      <thead class="table-light">
+  <!-- OVERVIEW PAGE -->
+  <div id="overviewPage" class="container-fluid" style="display:none">
+    <div class="d-flex justify-content-between align-items-center my-3">
+      <div>
+        <button id="btnNewOverview" class="btn btn-success me-2">New Diagram</button>
+      </div>
+      <div>
+        <button id="btnProfile" class="btn btn-info me-2">Profile</button>
+        <button id="btnLogout" class="btn btn-danger">Logout</button>
+      </div>
+    </div>
+
+    <table id="diagramTable" class="table table-striped table-hover">
+      <thead class="table-dark">
         <tr>
           <th>Name</th>
           <th>Last Modified</th>
@@ -74,82 +99,73 @@
       <tbody></tbody>
     </table>
   </div>
-</div>
 
-<!-- ===============================
-      EDITOR PAGE
-================================= -->
-<div id="editorPage" class="container py-4 d-none">
+  <!-- EDITOR PAGE -->
+  <div id="editorPage" class="container-fluid" style="display:none">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 id="diagramName" class="m-0"></h2>
+      <button id="btnRename" class="btn btn-secondary">Rename</button>
+    </div>
 
-  <div class="d-flex align-items-center mb-3">
-    <h2 class="me-3 mb-0" id="diagramName">Diagram</h2>
-    <button id="btnRename" class="btn btn-outline-secondary btn-sm">Rename</button>
-  </div>
+    <!-- Toolbar -->
+    <div class="editor-toolbar">
+      <button id="btnSave" class="btn btn-primary me-2">Save</button>
+      <button id="btnBack" class="btn btn-secondary me-2">Back</button>
+      <button id="btnShare" class="btn btn-info me-2">Share</button>
+      <button id="btnNewInside" class="btn btn-success me-2">New</button>
+      <button id="btnDelete" class="btn btn-danger me-2">Delete</button>
+      <button id="btnHistory" class="btn btn-warning">History</button>
+    </div>
 
-  <div id="canvas" class="border bg-white mb-3"></div>
+    <!-- BPMN Canvas -->
+    <div id="canvas"></div>
 
-  <div class="mb-3">
-    <button id="btnSave" class="btn btn-primary me-1">Save</button>
-    <button id="btnBack" class="btn btn-secondary me-1">Back</button>
-    <button id="btnShare" class="btn btn-info text-white me-1">Share</button>
-    <button id="btnNewInside" class="btn btn-success me-1">New</button>
-    <button id="btnDelete" class="btn btn-danger me-1">Delete</button>
-    <button id="btnHistory" class="btn btn-outline-secondary">History</button>
-  </div>
-
-  <div class="card p-3">
-    <p class="mb-1"><strong>Version:</strong> <span id="diagramVersion">-</span></p>
-    <p class="mb-1"><strong>Comment:</strong> <span id="diagramComment">-</span></p>
-    <p class="mb-1"><strong>Owner:</strong> <span id="diagramOwner">-</span></p>
-    <p class="mb-0"><strong>Last Modified:</strong> <span id="diagramDate">-</span></p>
-  </div>
-
-</div>
-
-<!-- ===============================
-      VERSION HISTORY MODAL
-================================= -->
-<div id="versionModal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Version History</h5>
-        <button id="closeVersionModal" type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Collapsible Diagram Details -->
+    <div class="collapse mt-2" id="diagramDetails">
+      <div class="card card-body">
+        <p>Version: <span id="diagramVersion">-</span></p>
+        <p>Comment: <span id="diagramComment">-</span></p>
+        <p>Owner: <span id="diagramOwner">-</span></p>
+        <p>Last Modified: <span id="diagramDate">-</span></p>
       </div>
-      <div class="modal-body" id="versionList"></div>
     </div>
   </div>
-</div>
 
-<!-- ===============================
-      PROFILE MODAL
-================================= -->
-<div id="profileModal" class="modal fade" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">User Profile</h5>
-        <button id="closeProfileModal" type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label for="profileUsername" class="form-label">Username</label>
-          <input id="profileUsername" type="text" class="form-control">
+  <!-- VERSION MODAL -->
+  <div id="versionModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Version History</h5>
+          <button id="closeVersionModal" class="btn-close"></button>
         </div>
-        <div class="d-flex justify-content-end">
+        <div class="modal-body" id="versionList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div id="profileModal" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">User Profile</h5>
+          <button id="closeProfileModal" class="btn-close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="profileUsername" class="form-label">Username</label>
+            <input id="profileUsername" type="text" class="form-control">
+          </div>
           <button id="btnSaveProfile" class="btn btn-primary">Save</button>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ===============================
-      SCRIPTS
-================================= -->
-<script src="./bpmn-modeler.production.min.js"></script>
-<script type="module" src="./js/app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+  <!-- Scripts -->
+  <script src="./bpmn-modeler.production.min.js"></script>
+  <script type="module" src="./js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
