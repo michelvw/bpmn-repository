@@ -11,18 +11,6 @@ let currentDiagramId = null;
 initModeler();
 
 /* ===============================
-   PAGE SHOW/HIDE
-================================= */
-function showAuth() {
-  document.getElementById('authPage').style.display = 'block';
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'none';
-}
-
-function showOverview() { ui.showOverview(); }
-function showEditor() { ui.showEditor(); }
-
-/* ===============================
    OVERVIEW
 ================================= */
 async function loadOverview() {
@@ -33,7 +21,7 @@ async function loadOverview() {
     async (id) => { await service.deleteDiagram(id); await loadOverview(); },
     async (id) => { await openHistoryModal(id); }
   );
-  showOverview();
+  ui.showOverview();
 }
 
 /* ===============================
@@ -49,7 +37,7 @@ async function openDiagram(id) {
   await loadXML(versionData.bpmn_xml);
   ui.renderDiagramDetails(detailData);
   setReadOnly(false);
-  showEditor();
+  ui.showEditor();
 }
 
 /* ===============================
@@ -68,23 +56,10 @@ async function saveDiagram() {
   if (!comment) return;
 
   await service.saveVersion(currentDiagramId, xml, comment);
-
   const details = await service.getDiagramDetails(currentDiagramId);
   ui.renderDiagramDetails(details);
 
-  alert('Diagram saved'); // stays on editor
-}
-
-/* ===============================
-   DELETE
-================================= */
-async function deleteCurrent() {
-  if (!currentDiagramId) return;
-  if (!confirm('Delete diagram?')) return;
-
-  await service.deleteDiagram(currentDiagramId);
-  currentDiagramId = null;
-  await loadOverview();
+  alert('Diagram saved');
 }
 
 /* ===============================
@@ -100,7 +75,7 @@ async function openHistoryModal(diagramId) {
     onView: async (version) => {
       const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
-      showEditor();
+      ui.showEditor();
       await loadXML(versionData.bpmn_xml);
       setReadOnly(true);
       ui.showViewedVersion({ ...version, ...versionData });
@@ -118,14 +93,6 @@ async function openHistoryModal(diagramId) {
 }
 
 /* ===============================
-   SHARE
-================================= */
-function shareDiagram() {
-  if (!currentDiagramId) return;
-  alert(generateShareLink(currentDiagramId));
-}
-
-/* ===============================
    NEW DIAGRAM
 ================================= */
 async function createNewDiagram(showEditorPage = true) {
@@ -133,40 +100,8 @@ async function createNewDiagram(showEditorPage = true) {
   await newEmptyDiagram();
   setReadOnly(false);
   ui.resetDiagramDetails();
-  if (showEditorPage) showEditor();
+  if(showEditorPage) ui.showEditor();
 }
-
-/* ===============================
-   RENAME
-================================= */
-document.getElementById('btnRename').onclick = () => {
-  const nameEl = document.getElementById('diagramName');
-  const currentName = nameEl.textContent;
-
-  nameEl.innerHTML = `<input type="text" class="form-control form-control-sm" id="diagramRenameInput" value="${currentName}">`;
-
-  const input = document.getElementById('diagramRenameInput');
-  input.focus();
-  input.select();
-
-  const btn = document.getElementById('btnRename');
-  btn.textContent = 'Save';
-  btn.classList.replace('btn-secondary','btn-success');
-
-  btn.onclick = async () => {
-    const newName = input.value.trim();
-    if(!newName) return alert('Name cannot be empty');
-
-    await service.renameDiagram(currentDiagramId, newName);
-    nameEl.textContent = newName;
-
-    btn.textContent = 'Rename';
-    btn.classList.replace('btn-success','btn-secondary');
-
-    // Rebind original handler
-    btn.onclick = document.getElementById('btnRename').onclick;
-  };
-};
 
 /* ===============================
    AUTH
@@ -190,8 +125,8 @@ async function handleSignup(email, password) {
 ================================= */
 document.getElementById('btnSave').onclick = saveDiagram;
 document.getElementById('btnBack').onclick = loadOverview;
-document.getElementById('btnShare').onclick = shareDiagram;
-document.getElementById('btnDelete').onclick = deleteCurrent;
+document.getElementById('btnShare').onclick = () => { if(currentDiagramId) alert(generateShareLink(currentDiagramId)); };
+document.getElementById('btnDelete').onclick = async () => { if(currentDiagramId) await service.deleteDiagram(currentDiagramId); await loadOverview(); };
 document.getElementById('btnHistory').onclick = () => openHistoryModal(currentDiagramId);
 document.getElementById('btnNewOverview').onclick = () => createNewDiagram(true);
 document.getElementById('btnNewInside').onclick = () => createNewDiagram(false);
@@ -206,10 +141,12 @@ document.getElementById('btnLogout').onclick = async () => {
   const { error } = await supabase.auth.signOut();
   if(error) return alert(error.message);
   currentUser = null;
-  showAuth();
+  ui.showAuth();
 };
 
-// Profile modal
+/* ===============================
+   PROFILE MODAL
+================================= */
 document.getElementById('btnProfile').onclick = async () => {
   const { data } = await userService.getProfile();
   document.getElementById('profileUsername').value = data.username || '';
@@ -243,6 +180,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       await loadOverview();
     }
   } else {
-    showAuth();
+    ui.showAuth();
   }
 });

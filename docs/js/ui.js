@@ -5,6 +5,12 @@
 /* ===============================
    PAGE SHOW/HIDE
 ================================= */
+export function showAuth() {
+  document.getElementById('authPage').classList.remove('d-none');
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.add('d-none');
+}
+
 export function showOverview() {
   document.getElementById('authPage').classList.add('d-none');
   document.getElementById('editorPage').classList.add('d-none');
@@ -131,7 +137,6 @@ export function closeVersionModal() {
   const modalEl = document.getElementById('versionModal');
   const bsModal = bootstrap.Modal.getInstance(modalEl);
   if(bsModal) {
-    // blur focused element to avoid aria-hidden error
     if(document.activeElement && modalEl.contains(document.activeElement)) document.activeElement.blur();
     bsModal.hide();
   }
