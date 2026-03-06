@@ -111,9 +111,22 @@ async function openHistoryModal(diagramId) {
 
   ui.renderVersionHistory(history, {
     onView: async (version) => {
+      const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
-      await viewVersion(version);
+      ui.showEditor();
+      await loadXML(versionData.bpmn_xml);
+      setReadOnly(true);
+
+      // Merge diagram-level info with the version being viewed
+      const diagramDetails = await service.getDiagramDetails(currentDiagramId);
+      const viewData = {
+        ...diagramDetails,      // name, owner, updated_at
+        ...version              // version number, comment, created_at
+      };
+
+      ui.showViewedVersion(viewData);
     },
+    
     onRestore: async (version) => {
       const versionData = await service.getVersionById(version.id);
       setReadOnly(false);
