@@ -18,10 +18,10 @@ export function initModeler() {
 ================================= */
 
 export async function loadXML(xml) {
-  await bpmnModeler.importXML(xml);
+  await modeler.importXML(xml);
 
-  const canvas = bpmnModeler.get("canvas");
-  const elementRegistry = bpmnModeler.get("elementRegistry");
+  const canvas = modeler.get("canvas");
+  const elementRegistry = modeler.get("elementRegistry");
 
   setTimeout(() => {
     const elements = elementRegistry.getAll();
