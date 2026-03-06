@@ -187,3 +187,38 @@ export function showViewedVersion(details) {
     btnSave.onclick = saveDiagram;
   };
 }
+
+/* ===============================
+   RENAME
+================================= */
+export function enableRename(currentName, onSave) {
+  const nameEl = document.getElementById('diagramName');
+  const btn = document.getElementById('btnRename');
+
+  // Replace name with input
+  nameEl.innerHTML = `<input type="text" class="form-control form-control-sm" id="diagramRenameInput" value="${currentName}">`;
+
+  const input = document.getElementById('diagramRenameInput');
+  input.focus();
+  input.select();
+
+  // Change button to "Save"
+  btn.textContent = 'Save';
+  btn.classList.replace('btn-secondary', 'btn-success');
+
+  const saveHandler = async () => {
+    const newName = input.value.trim();
+    if (!newName) return alert('Name cannot be empty');
+
+    await onSave(newName);
+
+    nameEl.textContent = newName;
+    btn.textContent = 'Rename';
+    btn.classList.replace('btn-success', 'btn-secondary');
+
+    // Rebind original handler
+    btn.onclick = () => enableRename(newName, onSave);
+  };
+
+  btn.onclick = saveHandler;
+}

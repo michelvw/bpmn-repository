@@ -126,7 +126,7 @@ async function openHistoryModal(diagramId) {
 
       ui.showViewedVersion(viewData);
     },
-    
+
     onRestore: async (version) => {
       const versionData = await service.getVersionById(version.id);
       setReadOnly(false);
@@ -173,7 +173,17 @@ async function handleSignup(email, password) {
 document.getElementById('btnSave').onclick = saveDiagram;
 document.getElementById('btnBack').onclick = loadOverview;
 document.getElementById('btnShare').onclick = () => { if(currentDiagramId) alert(generateShareLink(currentDiagramId)); };
-document.getElementById('btnDelete').onclick = async () => { if(currentDiagramId) await service.deleteDiagram(currentDiagramId); await loadOverview(); };
+
+document.getElementById('btnDelete').onclick = async () => {
+  if (!currentDiagramId) return;
+
+  if (!confirm('This will delete the diagram and all version history. Are you sure?')) return;
+  
+  await service.deleteDiagram(currentDiagramId);
+  currentDiagramId = null;
+  await loadOverview();
+};
+
 document.getElementById('btnHistory').onclick = () => openHistoryModal(currentDiagramId);
 document.getElementById('btnNewOverview').onclick = () => createNewDiagram(true);
 document.getElementById('btnNewInside').onclick = () => createNewDiagram(false);
