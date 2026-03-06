@@ -148,3 +148,40 @@ export function closeVersionModal() {
 export function showViewedVersion(details) {
   renderDiagramDetails(details);
 }
+
+/* ===============================
+   RENAME HANDLING
+================================= */
+let renameCallback = null;
+
+export function enableRename(currentName, onRename) {
+  renameCallback = onRename;
+  const nameEl = document.getElementById('diagramName');
+  const btn = document.getElementById('btnRename');
+
+  // Replace name with input
+  nameEl.innerHTML = `<input type="text" class="form-control form-control-sm" id="diagramRenameInput" value="${currentName}">`;
+
+  const input = document.getElementById('diagramRenameInput');
+  input.focus();
+  input.select();
+
+  // Change button to Save
+  btn.textContent = 'Save';
+  btn.classList.replace('btn-secondary','btn-success');
+
+  btn.onclick = async () => {
+    const newName = input.value.trim();
+    if(!newName) return alert('Name cannot be empty');
+
+    if(renameCallback) await renameCallback(newName);
+
+    // Restore UI
+    nameEl.textContent = newName;
+    btn.textContent = 'Rename';
+    btn.classList.replace('btn-success','btn-secondary');
+
+    // Rebind original handler
+    btn.onclick = () => enableRename(newName, renameCallback);
+  };
+}

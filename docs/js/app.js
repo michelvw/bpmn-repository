@@ -144,6 +144,16 @@ document.getElementById('btnLogout').onclick = async () => {
   ui.showAuth();
 };
 
+document.getElementById('btnRename').onclick = () => {
+  const nameEl = document.getElementById('diagramName');
+  const currentName = nameEl.textContent;
+
+  ui.enableRename(currentName, async (newName) => {
+    if(!currentDiagramId) return alert('No diagram selected.');
+    await service.renameDiagram(currentDiagramId, newName);
+  });
+};
+
 /* ===============================
    PROFILE MODAL
 ================================= */
