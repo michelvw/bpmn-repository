@@ -18,24 +18,40 @@ let currentDiagramId = null;
 initModeler();
 
 /* ===============================
+   PAGE SWITCHING
+================================= */
+
+function showAuth() {
+  document.getElementById('authPage').style.display = 'block';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'none';
+}
+
+function showOverview() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'block';
+  document.getElementById('editorPage').style.display = 'none';
+}
+
+function showEditor() {
+  document.getElementById('authPage').style.display = 'none';
+  document.getElementById('overviewPage').style.display = 'none';
+  document.getElementById('editorPage').style.display = 'flex';
+}
+
+/* ===============================
    OVERVIEW
 ================================= */
 
 async function loadOverview() {
-
   const data = await service.getDiagrams();
-
   ui.renderTable(
     data,
     openDiagram,
-    async (id) => {
-      await service.deleteDiagram(id);
-      await loadOverview();
-    },
-    async (id) => {
-      await openHistoryModal(id);
-    }
+    async (id) => { await service.deleteDiagram(id); await loadOverview(); },
+    async (id) => { await openHistoryModal(id); }
   );
+  showOverview();
 }
 
 /* ===============================
@@ -43,62 +59,42 @@ async function loadOverview() {
 ================================= */
 
 async function openDiagram(id) {
-
   if (!id) return;
 
-  const versionData =
-    await service.loadLatestVersion(id);
-
-  const detailData =
-    await service.getDiagramDetails(id);
+  const versionData = await service.loadLatestVersion(id);
+  const detailData = await service.getDiagramDetails(id);
 
   currentDiagramId = id;
 
   await loadXML(versionData.bpmn_xml);
 
   ui.renderDiagramDetails(detailData);
-
   setReadOnly(false);
-
-  ui.showEditor();
+  showEditor();
 }
 
 /* ===============================
-   SAVE
+   SAVE DIAGRAM
 ================================= */
 
 async function saveDiagram() {
-
   if (!currentDiagramId) {
-
     const name = prompt('Diagram name:');
-
     if (!name) return;
-
     const data = await service.createDiagram(name);
-
     currentDiagramId = data.id;
   }
 
   const xml = await getXML();
-
   const comment = prompt('Version comment:');
-
   if (!comment) return;
 
-  await service.saveVersion(
-    currentDiagramId,
-    xml,
-    comment
-  );
+  await service.saveVersion(currentDiagramId, xml, comment);
 
-  const details =
-    await service.getDiagramDetails(currentDiagramId);
-
+  const details = await service.getDiagramDetails(currentDiagramId);
   ui.renderDiagramDetails(details);
 
   await loadOverview();
-
   alert('Saved');
 }
 
@@ -107,17 +103,11 @@ async function saveDiagram() {
 ================================= */
 
 async function deleteCurrent() {
-
   if (!currentDiagramId) return;
-
   if (!confirm('Delete diagram?')) return;
 
   await service.deleteDiagram(currentDiagramId);
-
   currentDiagramId = null;
-
-  ui.showOverview();
-
   await loadOverview();
 }
 
@@ -126,62 +116,42 @@ async function deleteCurrent() {
 ================================= */
 
 async function openHistoryModal(diagramId) {
-
   if (!diagramId) {
     alert('No diagram selected.');
     return;
   }
 
   currentDiagramId = diagramId;
-
-  const history =
-    await service.getVersionHistory(diagramId);
+  const history = await service.getVersionHistory(diagramId);
 
   ui.renderVersionHistory(history, {
-
     onView: async (version) => {
-
-      const versionData =
-        await service.getVersionById(version.id);
-
+      const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
-
-      ui.showEditor();
-
+      showEditor();
       await loadXML(versionData.bpmn_xml);
-
       setReadOnly(true);
-
-      ui.showViewedVersion({
-        ...version,
-        ...versionData
-      });
+      ui.showViewedVersion({ ...version, ...versionData });
     },
-
     onRestore: async (version) => {
-
-      const versionData =
-        await service.getVersionById(version.id);
-
+      const versionData = await service.getVersionById(version.id);
       setReadOnly(false);
-
       await service.saveVersion(
         currentDiagramId,
         versionData.bpmn_xml,
         `Restored from v${version.version}`
       );
-
-      const details =
-        await service.getDiagramDetails(currentDiagramId);
-
+      const details = await service.getDiagramDetails(currentDiagramId);
       ui.renderDiagramDetails(details);
-
       ui.closeVersionModal();
-
       await loadOverview();
     }
-
   });
+
+  // Show Bootstrap modal
+  const modalEl = document.getElementById('versionModal');
+  const bsModal = new bootstrap.Modal(modalEl);
+  bsModal.show();
 }
 
 /* ===============================
@@ -189,9 +159,7 @@ async function openHistoryModal(diagramId) {
 ================================= */
 
 function shareDiagram() {
-
   if (!currentDiagramId) return;
-
   alert(generateShareLink(currentDiagramId));
 }
 
@@ -199,18 +167,12 @@ function shareDiagram() {
    NEW DIAGRAM
 ================================= */
 
-async function createNewDiagram(showEditor = true) {
-
+async function createNewDiagram(showEditorPage = true) {
   currentDiagramId = null;
-
   await newEmptyDiagram();
-
   setReadOnly(false);
-
   ui.resetDiagramDetails();
-
-  if (showEditor)
-    ui.showEditor();
+  if (showEditorPage) showEditor();
 }
 
 /* ===============================
@@ -218,64 +180,31 @@ async function createNewDiagram(showEditor = true) {
 ================================= */
 
 async function handleLogin(email, password) {
-
-  const { data, error } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) return alert(error.message);
 
   currentUser = data.user;
-
-  document.getElementById('authPage').style.display = 'none';
-
-  ui.showOverview();
-
   await loadOverview();
 }
 
 async function handleSignup(email, password) {
-
-  const { error } =
-    await supabase.auth.signUp({ email, password });
-
-  if (error)
-    return alert(error.message);
-
+  const { error } = await supabase.auth.signUp({ email, password });
+  if (error) return alert(error.message);
   alert('User created. You can log in.');
 }
 
 /* ===============================
-   BUTTON BINDINGS
+   EVENT BINDINGS
 ================================= */
 
+// Buttons
 document.getElementById('btnSave').onclick = saveDiagram;
-
-document.getElementById('btnBack').onclick = async () => {
-  ui.showOverview();
-  await loadOverview();
-};
-
+document.getElementById('btnBack').onclick = loadOverview;
 document.getElementById('btnShare').onclick = shareDiagram;
-
 document.getElementById('btnDelete').onclick = deleteCurrent;
-
-document.getElementById('btnHistory').onclick =
-  () => openHistoryModal(currentDiagramId);
-
-document.getElementById('btnNewOverview').onclick =
-  () => createNewDiagram(true);
-
-document.getElementById('btnNewInside').onclick =
-  () => createNewDiagram(false);
-
-document.getElementById('closeVersionModal').onclick =
-  ui.closeVersionModal;
+document.getElementById('btnHistory').onclick = () => openHistoryModal(currentDiagramId);
+document.getElementById('btnNewOverview').onclick = () => createNewDiagram(true);
+document.getElementById('btnNewInside').onclick = () => createNewDiagram(false);
 
 document.getElementById('btnSignup').onclick = () =>
   handleSignup(
@@ -290,87 +219,48 @@ document.getElementById('btnLogin').onclick = () =>
   );
 
 document.getElementById('btnLogout').onclick = async () => {
-
-  const { error } =
-    await supabase.auth.signOut();
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
+  const { error } = await supabase.auth.signOut();
+  if (error) return alert(error.message);
   currentUser = null;
-
-  document.getElementById('authPage').style.display = 'block';
-  document.getElementById('overviewPage').style.display = 'none';
-  document.getElementById('editorPage').style.display = 'none';
+  showAuth();
 };
 
+// Profile modal
 document.getElementById('btnProfile').onclick = async () => {
-
-  const { data } =
-    await userService.getProfile();
-
-  document.getElementById('profileUsername').value =
-    data.username || '';
-
-  document
-    .getElementById('profileModal')
-    .classList.remove('hidden');
-};
-
-document.getElementById('closeProfileModal').onclick = () => {
-
-  document
-    .getElementById('profileModal')
-    .classList.add('hidden');
+  const { data } = await userService.getProfile();
+  document.getElementById('profileUsername').value = data.username || '';
+  const profileModal = new bootstrap.Modal(document.getElementById('profileModal'));
+  profileModal.show();
 };
 
 document.getElementById('btnSaveProfile').onclick = async () => {
-
-  const username =
-    document.getElementById('profileUsername')
-      .value.trim();
-
-  if (!username) {
-    alert('Username required');
-    return;
-  }
-
+  const username = document.getElementById('profileUsername').value.trim();
+  if (!username) return alert('Username required');
   await userService.updateProfile(username);
-
   alert('Profile updated');
-
-  document
-    .getElementById('profileModal')
-    .classList.add('hidden');
+  const profileModalEl = document.getElementById('profileModal');
+  const bsModal = bootstrap.Modal.getInstance(profileModalEl);
+  if (bsModal) bsModal.hide();
 };
 
 /* ===============================
    STARTUP
 ================================= */
 
-const sharedId = getSharedDiagramId();
+window.addEventListener('DOMContentLoaded', async () => {
+  const sharedId = getSharedDiagramId();
+  const { data: sessionData } = await supabase.auth.getSession();
 
-const { data: sessionData } =
-  await supabase.auth.getSession();
+  if (sessionData.session) {
+    currentUser = sessionData.session.user;
 
-if (sessionData.session) {
-
-  currentUser = sessionData.session.user;
-
-  document.getElementById('authPage').style.display = 'none';
-
-  if (sharedId) {
-
-    await openDiagram(sharedId);
-
-    setReadOnly(true);
-
+    if (sharedId) {
+      await openDiagram(sharedId);
+      setReadOnly(true);
+    } else {
+      await loadOverview();
+    }
   } else {
-
-    ui.showOverview();
-
-    await loadOverview();
+    showAuth();
   }
-}
+});
