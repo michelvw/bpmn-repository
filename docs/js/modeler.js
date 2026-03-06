@@ -18,15 +18,19 @@ export function initModeler() {
 ================================= */
 
 export async function loadXML(xml) {
+  await bpmnModeler.importXML(xml);
 
-  if (!modeler)
-    throw new Error('Modeler not initialized');
+  const canvas = bpmnModeler.get("canvas");
+  const elementRegistry = bpmnModeler.get("elementRegistry");
 
-  await modeler.importXML(xml);
+  setTimeout(() => {
+    const elements = elementRegistry.getAll();
 
-  const canvas = modeler.get('canvas');
-
-  canvas.zoom('fit-viewport');
+    // Only zoom if diagram has more than the root element
+    if (elements.length > 1) {
+      canvas.zoom("fit-viewport");
+    }   
+  }, 0);
 }
 
 
