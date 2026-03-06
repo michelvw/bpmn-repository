@@ -1,111 +1,56 @@
 let modeler;
+let readOnly = false;
 
-/* ===============================
-   INITIALIZE MODELER
-================================= */
-
+/**
+ * Initialize BPMN modeler
+ */
 export function initModeler() {
-
-  modeler = new BpmnJS({
-    container: '#canvas'
-  });
-
+  modeler = new window.BpmnJS({ container: '#canvas' });
 }
 
-
-/* ===============================
-   LOAD BPMN XML
-================================= */
-
+/**
+ * Load XML into modeler
+ */
 export async function loadXML(xml) {
   await modeler.importXML(xml);
-
-  const canvas = modeler.get("canvas");
-  const elementRegistry = modeler.get("elementRegistry");
-
-  setTimeout(() => {
-    // Get only elements that are not the root process
-    const shapes = elementRegistry.getAll().filter(el => el.type !== 'bpmn:Process');
-
-    // Only zoom if we have shapes
-    if (shapes.length) {
-      canvas.zoom('fit-viewport');
-    }
-  }, 50);
 }
 
-
-/* ===============================
-   GET XML FROM MODEL
-================================= */
-
+/**
+ * Get current diagram XML
+ */
 export async function getXML() {
-
-  const { xml } =
-    await modeler.saveXML({ format: true });
-
-  return xml;
+  return (await modeler.saveXML({ format: true })).xml;
 }
 
+/**
+ * Set read-only mode
+ */
+export function setReadOnly(state) {
+  readOnly = state;
+  modeler.get('canvas').getContainer().style.pointerEvents = state ? 'none' : 'auto';
+}
 
-/* ===============================
-   NEW EMPTY DIAGRAM
-================================= */
-
+/**
+ * Create new empty diagram
+ */
 export async function newEmptyDiagram() {
+  const empty = `<?xml version="1.0" encoding="UTF-8"?>
+  <bpmn:definitions
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+    xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    id="Definitions_1"
+    targetNamespace="http://bpmn.io/schema/bpmn">
 
-  const emptyDiagram = `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-  id="Definitions_1"
-  targetNamespace="http://bpmn.io/schema/bpmn">
+    <bpmn:process id="Process_1" isExecutable="false" />
 
-<bpmn:process id="Process_1" isExecutable="false"/>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+      <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1" />
+    </bpmndi:BPMNDiagram>
 
-<bpmndi:BPMNDiagram id="BPMNDiagram_1">
-<bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1"/>
-</bpmndi:BPMNDiagram>
+  </bpmn:definitions>`;
 
-</bpmn:definitions>`;
-
-  await loadXML(emptyDiagram);
-}
-
-
-/* ===============================
-   READ ONLY MODE
-================================= */
-
-export function setReadOnly(readOnly) {
-
-  const palette =
-    document.querySelector('.djs-palette');
-
-  const contextPad =
-    document.querySelector('.djs-context-pad');
-
-  const directEditing =
-    modeler.get('directEditing');
-
-  if (readOnly) {
-
-    if (palette)
-      palette.style.display = 'none';
-
-    if (contextPad)
-      contextPad.style.display = 'none';
-
-    directEditing.cancel();
-
-  } else {
-
-    if (palette)
-      palette.style.display = 'block';
-
-    if (contextPad)
-      contextPad.style.display = 'block';
-  }
+  await loadXML(empty);
 }
