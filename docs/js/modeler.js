@@ -23,15 +23,15 @@ export async function loadXML(xml) {
   const canvas = modeler.get("canvas");
   const elementRegistry = modeler.get("elementRegistry");
 
-  // Delay slightly to ensure rendering
   setTimeout(() => {
-    // Filter only actual diagram elements (skip the root process)
+    // Get only elements that are not the root process
     const shapes = elementRegistry.getAll().filter(el => el.type !== 'bpmn:Process');
 
+    // Only zoom if we have shapes
     if (shapes.length) {
-      canvas.zoom("fit-viewport");
+      canvas.zoom('fit-viewport');
     }
-  }, 50); // 50ms is usually sufficient
+  }, 50);
 }
 
 
