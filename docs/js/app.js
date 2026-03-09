@@ -10,6 +10,17 @@ let currentDiagramId = null;
 
 initModeler();
 
+function withErrorHandling(fn) {
+  return async (...args) => {
+    try {
+      await fn(...args);
+    } catch (err) {
+      console.error(err);
+      ui.showToast(err.message || 'Something went wrong', 'danger');
+    }
+  };
+}
+
 /* ===============================
    OVERVIEW
 ================================= */
@@ -17,9 +28,9 @@ async function loadOverview() {
   const data = await service.getDiagrams();
   ui.renderTable(
     data,
-    openDiagram,
-    async (id) => { await service.deleteDiagram(id); await loadOverview(); },
-    async (id) => { await openHistoryModal(id); }
+    withErrorHandling(openDiagram),
+    withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
+    withErrorHandling(async (id) => { await openHistoryModal(id); })
   );
   ui.resetSaveButton(saveDiagram);
   ui.showOverview();
@@ -151,40 +162,41 @@ async function handleSignup(email, password) {
 /* ===============================
    EVENT BINDINGS
 ================================= */
-document.getElementById('btnSave').onclick = saveDiagram;
-document.getElementById('btnBack').onclick = loadOverview;
+document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
+document.getElementById('btnBack').onclick = withErrorHandling(loadOverview);
 document.getElementById('btnShare').onclick = () => {
   if (currentDiagramId) ui.showShareModal(generateShareLink(currentDiagramId));
 };
 
-document.getElementById('btnDelete').onclick = async () => {
+document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
   if (!currentDiagramId) return;
 
   if (!confirm('This will delete the diagram and all version history. Are you sure?')) return;
   
   await service.deleteDiagram(currentDiagramId);
   currentDiagramId = null;
-  await loadOverview();
-};
+  await loadOverview()
+}
+);
 
-document.getElementById('btnHistory').onclick = () => openHistoryModal(currentDiagramId);
-document.getElementById('btnNewOverview').onclick = () => createNewDiagram(true);
-document.getElementById('btnNewInside').onclick = () => createNewDiagram(false);
+document.getElementById('btnHistory').onclick = withErrorHandling(() => openHistoryModal(currentDiagramId));
+document.getElementById('btnNewOverview').onclick = withErrorHandling(() => createNewDiagram(true));
+document.getElementById('btnNewInside').onclick = withErrorHandling(() => createNewDiagram(false));
 
-document.getElementById('btnSignup').onclick = () =>
-  handleSignup(document.getElementById('emailInput').value, document.getElementById('passwordInput').value);
+document.getElementById('btnSignup').onclick = withErrorHandling(() =>
+  handleSignup(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
 
-document.getElementById('btnLogin').onclick = () =>
-  handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value);
+document.getElementById('btnLogin').onclick = withErrorHandling(() =>
+  handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
 
-document.getElementById('btnLogout').onclick = async () => {
+document.getElementById('btnLogout').onclick = withErrorHandling(async () => {
   const { error } = await supabase.auth.signOut();
   if (error) return ui.showToast(error.message, 'danger');
   currentUser = null;
   ui.showAuth();
-};
+});
 
-document.getElementById('btnRename').onclick = () => {
+document.getElementById('btnRename').onclick = withErrorHandling(() => {
   const nameEl = document.getElementById('diagramName');
   const currentName = nameEl.textContent;
 
@@ -192,7 +204,7 @@ document.getElementById('btnRename').onclick = () => {
     if(!currentDiagramId) return ui.showToast('No diagram selected.', 'warning');
     await service.renameDiagram(currentDiagramId, newName);
   });
-};
+});
 
 /* ===============================
    PROFILE MODAL
@@ -217,7 +229,7 @@ document.getElementById('btnSaveProfile').onclick = async () => {
 /* ===============================
    STARTUP
 ================================= */
-window.addEventListener('DOMContentLoaded', async () => {
+window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   const sharedId = getSharedDiagramId();
   const { data: sessionData } = await supabase.auth.getSession();
 
@@ -232,4 +244,4 @@ window.addEventListener('DOMContentLoaded', async () => {
   } else {
     ui.showAuth();
   }
-});
+}));
