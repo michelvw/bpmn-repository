@@ -170,14 +170,16 @@ document.getElementById('btnShare').onclick = () => {
 
 document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
   if (!currentDiagramId) return;
-
-  if (!confirm('This will delete the diagram and all version history. Are you sure?')) return;
-  
-  await service.deleteDiagram(currentDiagramId);
-  currentDiagramId = null;
-  await loadOverview()
-}
-);
+  ui.showConfirmModal(
+    'Delete Diagram',
+    'This will delete the diagram and all version history. Are you sure?',
+    withErrorHandling(async () => {
+      await service.deleteDiagram(currentDiagramId);
+      currentDiagramId = null;
+      await loadOverview();
+    })
+  );
+});
 
 document.getElementById('btnHistory').onclick = withErrorHandling(() => openHistoryModal(currentDiagramId));
 document.getElementById('btnNewOverview').onclick = withErrorHandling(() => createNewDiagram(true));

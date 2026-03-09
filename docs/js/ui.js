@@ -55,8 +55,13 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
 
     row.querySelector('.open-btn').onclick = () => onOpen(d.id);
     row.querySelector('.history-btn').onclick = () => onHistory(d.id);
-    row.querySelector('.delete-btn').onclick = () => { if(confirm('Delete this diagram?')) onDelete(d.id); };
-
+    row.querySelector('.delete-btn').onclick = () => {
+      showConfirmModal(
+        'Delete Diagram',
+        'This will delete the diagram and all version history. Are you sure?',
+        () => onDelete(d.id)
+      );
+    };
     tbody.appendChild(row);
   });
 }
@@ -268,6 +273,25 @@ export function showShareModal(link) {
     copyBtn.textContent = 'Copied!';
     setTimeout(() => copyBtn.textContent = 'Copy', 2000);
   };
+
+  modal.show();
+}
+
+export function showConfirmModal(title, message, onConfirm) {
+  const modalEl = document.getElementById('confirmModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  document.getElementById('confirmModalTitle').textContent = title;
+  document.getElementById('confirmModalBody').textContent = message;
+
+  const confirmBtn = document.getElementById('confirmModalConfirm');
+  const newConfirm = confirmBtn.cloneNode(true);
+  confirmBtn.replaceWith(newConfirm);
+
+  newConfirm.addEventListener('click', () => {
+    modal.hide();
+    onConfirm();
+  });
 
   modal.show();
 }
