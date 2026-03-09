@@ -121,14 +121,24 @@ async function openHistoryModal(diagramId) {
       await loadXML(versionData.bpmn_xml);
       setReadOnly(true);
 
-      // Merge diagram-level info with the version being viewed
       const diagramDetails = await service.getDiagramDetails(currentDiagramId);
       const viewData = {
-        ...diagramDetails,      // name, owner, updated_at
-        ...version              // version number, comment, created_at
+        ...diagramDetails,
+        ...version
       };
 
-      ui.showViewedVersion(viewData);
+      ui.showViewedVersion(viewData, async () => {
+        setReadOnly(false);
+        await service.saveVersion(
+          currentDiagramId,
+          versionData.bpmn_xml,
+          `Restored from v${version.version}`
+        );
+        const details = await service.getDiagramDetails(currentDiagramId);
+        ui.renderDiagramDetails(details);
+        ui.resetSaveButton(saveDiagram);
+        alert(`Version ${version.version} restored as latest.`);
+      });
     },
 
     onRestore: async (version) => {
