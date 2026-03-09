@@ -164,7 +164,7 @@ async function handleLogin(email, password) {
 async function handleSignup(email, password) {
   const { error } = await supabase.auth.signUp({ email, password });
   if(error) return alert(error.message);
-  alert('User created. You can log in.');
+  alert('Check your email to confirm your account.');
 }
 
 /* ===============================
