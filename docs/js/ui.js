@@ -168,6 +168,13 @@ export function showViewedVersion(details, onRestore) {
   btnSave.onclick = onRestore ?? null;
 }
 
+export function resetSaveButton(onSave) {
+  const btnSave = document.getElementById('btnSave');
+  btnSave.textContent = 'Save';
+  btnSave.classList.replace('btn-success', 'btn-primary');
+  btnSave.onclick = onSave;
+}
+
 /* ===============================
    RENAME
 ================================= */

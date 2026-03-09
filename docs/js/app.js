@@ -10,6 +10,8 @@ let currentDiagramId = null;
 
 initModeler();
 
+function saveDiagramHandler() { saveDiagram(); }
+
 /* ===============================
    OVERVIEW
 ================================= */
@@ -21,6 +23,7 @@ async function loadOverview() {
     async (id) => { await service.deleteDiagram(id); await loadOverview(); },
     async (id) => { await openHistoryModal(id); }
   );
+  ui.resetSaveButton(saveDiagram);
   ui.showOverview();
 }
 
@@ -37,6 +40,7 @@ async function openDiagram(id) {
   await loadXML(versionData.bpmn_xml);
   ui.renderDiagramDetails(detailData);
   setReadOnly(false);
+  ui.resetSaveButton(saveDiagram);
   ui.showEditor();
 }
 
@@ -134,6 +138,7 @@ async function openHistoryModal(diagramId) {
       const details = await service.getDiagramDetails(currentDiagramId);
       ui.renderDiagramDetails(details);
       ui.closeVersionModal();
+      ui.resetSaveButton(saveDiagram);
       await loadOverview();
     }
   });
