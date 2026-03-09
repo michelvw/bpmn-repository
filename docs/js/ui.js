@@ -89,10 +89,6 @@ export function renderDiagramDetails(diagram) {
   } else {
     dateEl.textContent = '-';
   }
-
-  // Show details collapse
-  const detailsEl = document.getElementById('diagramDetails');
-  bootstrap.Collapse.getOrCreateInstance(detailsEl).show();
 }
 
 export function resetDiagramDetails() {
@@ -168,9 +164,6 @@ export function showViewedVersion(details, onRestore) {
   const dateEl = document.getElementById('diagramDate');
   const d = details.updated_at ? new Date(details.updated_at) : (details.created_at ? new Date(details.created_at) : null);
   dateEl.textContent = d && !isNaN(d) ? d.toLocaleString() : '-';
-
-  const detailsEl = document.getElementById('diagramDetails');
-  bootstrap.Collapse.getOrCreateInstance(detailsEl).show();
 
   const btnSave = document.getElementById('btnSave');
   btnSave.textContent = 'Restore as Latest';
