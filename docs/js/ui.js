@@ -1,6 +1,12 @@
 /* ===============================
    UI MODULE
 ================================= */
+// Globally fix aria-hidden focus issue for all modals
+document.addEventListener('hide.bs.modal', () => {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+}, true);
 
 /* ===============================
    PAGE SHOW/HIDE
