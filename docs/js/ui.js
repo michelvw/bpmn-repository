@@ -92,8 +92,7 @@ export function renderDiagramDetails(diagram) {
 
   // Show details collapse
   const detailsEl = document.getElementById('diagramDetails');
-  const bsCollapse = new bootstrap.Collapse(detailsEl, { toggle: false });
-  bsCollapse.show();
+  bootstrap.Collapse.getOrCreateInstance(detailsEl).show();
 }
 
 export function resetDiagramDetails() {
