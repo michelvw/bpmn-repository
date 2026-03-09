@@ -55,30 +55,14 @@ export async function createDiagram(name) {
 export async function saveVersion(diagramId, xml, comment) {
   const user = await getCurrentUser();
 
-  // Get latest version
-  const { data: latest, error: latestError } = await supabase
-    .from('diagram_versions')
-    .select('version')
-    .eq('diagram_id', diagramId)
-    .order('version', { ascending: false })
-    .limit(1);
-
-  if (latestError) throw latestError;
-
-  const nextVersion = latest?.length ? latest[0].version + 1 : 1;
-
-  const { data, error } = await supabase
-    .from('diagram_versions')
-    .insert({
-      diagram_id: diagramId,
-      created_by: user.id,
-      version: nextVersion,
-      comment,
-      bpmn_xml: xml
-    });
+  const { error } = await supabase.rpc('save_diagram_version', {
+    p_diagram_id: diagramId,
+    p_created_by: user.id,
+    p_comment: comment,
+    p_bpmn_xml: xml
+  });
 
   if (error) throw error;
-  return data;
 }
 
 /**
