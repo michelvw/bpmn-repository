@@ -147,13 +147,10 @@ export function closeVersionModal() {
 ================================= */
 let _restoreCallback = null;
 
-export function showViewedVersion(details) {
-  // Append "(read-only)" to diagram name
+export function showViewedVersion(details, onRestore) {
   const nameEl = document.getElementById('diagramName');
-  const baseName = details.name || 'Unnamed diagram';
-  nameEl.textContent = `${baseName} (read-only)`;
+  nameEl.textContent = `${details.name || 'Unnamed diagram'} (read-only)`;
 
-  // Fill in diagram details
   document.getElementById('diagramVersion').textContent = details.version || '-';
   document.getElementById('diagramComment').textContent = details.comment || '-';
   document.getElementById('diagramOwner').textContent = details.owner?.username || '-';
@@ -162,30 +159,13 @@ export function showViewedVersion(details) {
   const d = details.updated_at ? new Date(details.updated_at) : (details.created_at ? new Date(details.created_at) : null);
   dateEl.textContent = d && !isNaN(d) ? d.toLocaleString() : '-';
 
-  // Show details collapse
   const detailsEl = document.getElementById('diagramDetails');
-  const bsCollapse = new bootstrap.Collapse(detailsEl, { toggle: false });
-  bsCollapse.show();
+  bootstrap.Collapse.getOrCreateInstance(detailsEl).show();
 
-  // Replace save button with "Restore as latest" when viewing
   const btnSave = document.getElementById('btnSave');
   btnSave.textContent = 'Restore as Latest';
   btnSave.classList.replace('btn-primary', 'btn-success');
-
-  // Remove previous onclick
-  btnSave.onclick = async () => {
-    if(!currentDiagramId) return alert('No diagram selected.');
-    // Restore this version as latest
-    setReadOnly(false);
-    await service.saveVersion(currentDiagramId, details.bpmn_xml, `Restored from v${details.version}`);
-    const updatedDetails = await service.getDiagramDetails(currentDiagramId);
-    ui.renderDiagramDetails(updatedDetails);
-    alert('Version restored as latest.');
-    // Restore save button to normal
-    btnSave.textContent = 'Save';
-    btnSave.classList.replace('btn-success','btn-primary');
-    btnSave.onclick = saveDiagram;
-  };
+  btnSave.onclick = onRestore ?? null;
 }
 
 /* ===============================
