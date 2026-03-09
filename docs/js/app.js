@@ -47,28 +47,34 @@ async function openDiagram(id) {
 ================================= */
 async function saveDiagram() {
   if (!currentDiagramId) {
-    const name = prompt('Diagram name:');
-    if (!name) return;
-    const data = await service.createDiagram(name);
-    currentDiagramId = data.id;
+    ui.showInputModal('Diagram Name', 'Enter a name...', async (name) => {
+      const data = await service.createDiagram(name);
+      currentDiagramId = data.id;
+      ui.showInputModal('Version Comment', 'Enter a comment...', async (comment) => {
+        const xml = await getXML();
+        await service.saveVersion(currentDiagramId, xml, comment);
+        const details = await service.getDiagramDetails(currentDiagramId);
+        ui.renderDiagramDetails(details);
+        ui.showToast('Diagram saved');
+      });
+    });
+    return;
   }
 
-  const xml = await getXML();
-  const comment = prompt('Version comment:');
-  if (!comment) return;
-
-  await service.saveVersion(currentDiagramId, xml, comment);
-  const details = await service.getDiagramDetails(currentDiagramId);
-  ui.renderDiagramDetails(details);
-
-  alert('Diagram saved');
+  ui.showInputModal('Version Comment', 'Enter a comment...', async (comment) => {
+    const xml = await getXML();
+    await service.saveVersion(currentDiagramId, xml, comment);
+    const details = await service.getDiagramDetails(currentDiagramId);
+    ui.renderDiagramDetails(details);
+    ui.showToast('Diagram saved');
+  });
 }
 
 /* ===============================
    HISTORY
 ================================= */
 async function openHistoryModal(diagramId) {
-  if (!diagramId) return alert('No diagram selected.');
+  if (!diagramId) return ui.showToast('No diagram selected.', 'warning');
 
   currentDiagramId = diagramId;
   const history = await service.getVersionHistory(diagramId);
@@ -97,7 +103,7 @@ async function openHistoryModal(diagramId) {
         const details = await service.getDiagramDetails(currentDiagramId);
         ui.renderDiagramDetails(details);
         ui.resetSaveButton(saveDiagram);
-        alert(`Version ${version.version} restored as latest.`);
+        ui.showToast(`Version ${version.version} restored as latest.`);
       });
     },
 
@@ -130,7 +136,7 @@ async function createNewDiagram(showEditorPage = true) {
 ================================= */
 async function handleLogin(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error) return alert(error.message);
+  if (error) return ui.showToast(error.message, 'danger');
 
   currentUser = data.user;
   await loadOverview();
@@ -138,8 +144,8 @@ async function handleLogin(email, password) {
 
 async function handleSignup(email, password) {
   const { error } = await supabase.auth.signUp({ email, password });
-  if(error) return alert(error.message);
-  alert('Check your email to confirm your account.');
+  if (error) return ui.showToast(error.message, 'danger');
+  ui.showToast('Check your email to confirm your account.', 'info');
 }
 
 /* ===============================
@@ -147,7 +153,9 @@ async function handleSignup(email, password) {
 ================================= */
 document.getElementById('btnSave').onclick = saveDiagram;
 document.getElementById('btnBack').onclick = loadOverview;
-document.getElementById('btnShare').onclick = () => { if(currentDiagramId) alert(generateShareLink(currentDiagramId)); };
+document.getElementById('btnShare').onclick = () => {
+  if (currentDiagramId) ui.showShareModal(generateShareLink(currentDiagramId));
+};
 
 document.getElementById('btnDelete').onclick = async () => {
   if (!currentDiagramId) return;
@@ -171,7 +179,7 @@ document.getElementById('btnLogin').onclick = () =>
 
 document.getElementById('btnLogout').onclick = async () => {
   const { error } = await supabase.auth.signOut();
-  if(error) return alert(error.message);
+  if (error) return ui.showToast(error.message, 'danger');
   currentUser = null;
   ui.showAuth();
 };
@@ -181,7 +189,7 @@ document.getElementById('btnRename').onclick = () => {
   const currentName = nameEl.textContent;
 
   ui.enableRename(currentName, async (newName) => {
-    if(!currentDiagramId) return alert('No diagram selected.');
+    if(!currentDiagramId) return ui.showToast('No diagram selected.', 'warning');
     await service.renameDiagram(currentDiagramId, newName);
   });
 };
@@ -198,9 +206,9 @@ document.getElementById('btnProfile').onclick = async () => {
 
 document.getElementById('btnSaveProfile').onclick = async () => {
   const username = document.getElementById('profileUsername').value.trim();
-  if(!username) return alert('Username required');
+  if(!username) return ui.showToast('Username required', 'warning');
   await userService.updateProfile(username);
-  alert('Profile updated');
+  ui.showToast('Profile updated');
   const profileModalEl = document.getElementById('profileModal');
   const bsModal = bootstrap.Modal.getInstance(profileModalEl);
   if(bsModal) bsModal.hide();

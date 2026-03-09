@@ -195,7 +195,7 @@ export function enableRename(currentName, onSave) {
 
   const saveHandler = async () => {
     const newName = input.value.trim();
-    if (!newName) return alert('Name cannot be empty');
+    if (!newName) { showToast('Name cannot be empty', 'warning'); return; }
 
     await onSave(newName);
 
@@ -208,4 +208,60 @@ export function enableRename(currentName, onSave) {
   };
 
   btn.onclick = saveHandler;
+}
+
+export function showToast(message, type = 'success') {
+  const toastEl = document.getElementById('appToast');
+  const toastMsg = document.getElementById('toastMessage');
+
+  // Reset classes and apply the right background
+  toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+  toastMsg.textContent = message;
+
+  bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3000 }).show();
+}
+
+export function showInputModal(title, placeholder, onConfirm) {
+  const modalEl = document.getElementById('inputModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  const field = document.getElementById('inputModalField');
+  const confirmBtn = document.getElementById('inputModalConfirm');
+
+  document.getElementById('inputModalTitle').textContent = title;
+  field.placeholder = placeholder;
+  field.value = '';
+
+  // Clone confirm button to remove previous listeners
+  const newConfirm = confirmBtn.cloneNode(true);
+  confirmBtn.replaceWith(newConfirm);
+
+  const handleConfirm = () => {
+    const value = field.value.trim();
+    if (!value) return;
+    modal.hide();
+    onConfirm(value);
+  };
+
+  newConfirm.addEventListener('click', handleConfirm);
+
+  // Also allow Enter key to confirm
+  field.onkeydown = (e) => { if (e.key === 'Enter') handleConfirm(); };
+
+  modal.show();
+  modalEl.addEventListener('shown.bs.modal', () => field.focus(), { once: true });
+}
+
+export function showShareModal(link) {
+  const modalEl = document.getElementById('shareModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  document.getElementById('shareLink').value = link;
+
+  const copyBtn = document.getElementById('btnCopyLink');
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(link);
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+  };
+
+  modal.show();
 }
