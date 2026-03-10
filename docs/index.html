@@ -132,7 +132,17 @@
       <button id="btnShare" class="btn btn-info me-2">Share</button>
       <button id="btnNewInside" class="btn btn-success me-2">New</button>
       <button id="btnDelete" class="btn btn-danger me-2">Delete</button>
-      <button id="btnHistory" class="btn btn-warning">History</button>
+      <button id="btnHistory" class="btn btn-warning me-2">History</button>
+      <div class="btn-group">
+        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+          Download
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" id="btnDownloadBpmn">BPMN (XML)</a></li>
+          <li><a class="dropdown-item" id="btnDownloadSvg">SVG</a></li>
+          <li><a class="dropdown-item" id="btnDownloadPng">PNG</a></li>
+        </ul>
+      </div>
     </div>
 
     <!-- BPMN Canvas -->

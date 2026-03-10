@@ -54,3 +54,47 @@ export async function newEmptyDiagram() {
 
   await loadXML(empty);
 }
+
+export async function downloadBpmn(filename = 'diagram') {
+  const xml = await getXML();
+  const blob = new Blob([xml], { type: 'application/xml' });
+  triggerDownload(blob, `${filename}.bpmn`);
+}
+
+export async function downloadSvg(filename = 'diagram') {
+  const { svg } = await modeler.saveSVG();
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  triggerDownload(blob, `${filename}.svg`);
+}
+
+export async function downloadPng(filename = 'diagram') {
+  const { svg } = await modeler.saveSVG();
+
+  const img = new Image();
+  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob(blob => {
+      triggerDownload(blob, `${filename}.png`);
+    }, 'image/png');
+  };
+
+  img.src = url;
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

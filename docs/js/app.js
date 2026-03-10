@@ -1,4 +1,4 @@
-import { initModeler, newEmptyDiagram, loadXML, getXML, setReadOnly } from './modeler.js';
+import { initModeler, newEmptyDiagram, loadXML, getXML, setReadOnly, downloadBpmn, downloadSvg, downloadPng } from './modeler.js';
 import * as service from './diagramService.js';
 import * as userService from './userService.js';
 import * as ui from './ui.js';
@@ -180,6 +180,15 @@ document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
     })
   );
 });
+
+// Helper to get current diagram name for the filename
+function getDiagramName() {
+  return document.getElementById('diagramName').textContent.replace(' (read-only)', '').trim() || 'diagram';
+}
+
+document.getElementById('btnDownloadBpmn').onclick = withErrorHandling(() => downloadBpmn(getDiagramName()));
+document.getElementById('btnDownloadSvg').onclick = withErrorHandling(() => downloadSvg(getDiagramName()));
+document.getElementById('btnDownloadPng').onclick = withErrorHandling(() => downloadPng(getDiagramName()));
 
 document.getElementById('btnHistory').onclick = withErrorHandling(() => openHistoryModal(currentDiagramId));
 document.getElementById('btnNewOverview').onclick = withErrorHandling(() => createNewDiagram(true));
