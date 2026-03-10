@@ -190,10 +190,6 @@ document.getElementById('btnDownloadBpmn').onclick = withErrorHandling(() => dow
 document.getElementById('btnDownloadSvg').onclick = withErrorHandling(() => downloadSvg(getDiagramName()));
 document.getElementById('btnDownloadPng').onclick = withErrorHandling(() => downloadPng(getDiagramName()));
 
-document.getElementById('btnImport').onclick = () => {
-  document.getElementById('importFileInput').click();
-};
-
 const triggerImport = () => document.getElementById('importFileInput').click();
 
 document.getElementById('btnImportOverview').onclick = triggerImport;
