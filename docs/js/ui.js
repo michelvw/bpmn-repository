@@ -238,15 +238,17 @@ export function showInputModal(title, placeholder, onConfirm) {
   const newConfirm = confirmBtn.cloneNode(true);
   confirmBtn.replaceWith(newConfirm);
 
-  const handleConfirm = () => {
+ const handleConfirm = () => {
     const value = field.value.trim();
     if (!value) return;
     document.activeElement?.blur();
     modal.hide();
-    onConfirm(value).catch(err => {
-      console.error(err);
-      showToast(err.message || 'Something went wrong', 'danger');
-    });
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      onConfirm(value).catch(err => {
+        console.error(err);
+        showToast(err.message || 'Something went wrong', 'danger');
+      });
+    }, { once: true });
   };
 
   newConfirm.addEventListener('click', handleConfirm);
