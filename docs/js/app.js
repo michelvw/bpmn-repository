@@ -194,18 +194,22 @@ document.getElementById('btnImport').onclick = () => {
   document.getElementById('importFileInput').click();
 };
 
+const triggerImport = () => document.getElementById('importFileInput').click();
+
+document.getElementById('btnImportOverview').onclick = triggerImport;
+document.getElementById('btnImportInside').onclick = triggerImport;
+
 document.getElementById('importFileInput').onchange = withErrorHandling(async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
   const xml = await file.text();
-  await loadXML(xml);
   currentDiagramId = null;
+  await loadXML(xml);
   ui.resetDiagramDetails();
   ui.showEditor();
   ui.showToast('Diagram imported — save to store it', 'info');
 
-  // Reset file input so the same file can be re-imported if needed
   e.target.value = '';
 });
 

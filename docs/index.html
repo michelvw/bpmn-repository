@@ -97,7 +97,15 @@
   <div id="overviewPage" class="container-fluid d-none">
     <div class="d-flex justify-content-between align-items-center my-3">
       <div>
-        <button id="btnNewOverview" class="btn btn-success me-2">New Diagram</button>
+        <div class="btn-group">
+          <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+            New Diagram
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" id="btnNewOverview">Blank Diagram</a></li>
+            <li><a class="dropdown-item" id="btnImportOverview">Import Diagram</a></li>
+          </ul>
+        </div>
       </div>
       <div>
         <button id="btnProfile" class="btn btn-info me-2">Profile</button>
@@ -130,7 +138,15 @@
       <button id="btnSave" class="btn btn-primary me-2">Save</button>
       <button id="btnBack" class="btn btn-secondary me-2">Back</button>
       <button id="btnShare" class="btn btn-info me-2">Share</button>
-      <button id="btnNewInside" class="btn btn-success me-2">New</button>
+      <div class="btn-group me-2">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+          New
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" id="btnNewInside">Blank Diagram</a></li>
+          <li><a class="dropdown-item" id="btnImportInside">Import Diagram</a></li>
+        </ul>
+      </div>
       <button id="btnDelete" class="btn btn-danger me-2">Delete</button>
       <button id="btnHistory" class="btn btn-warning me-2">History</button>
       <div class="btn-group">
@@ -143,9 +159,9 @@
           <li><a class="dropdown-item" id="btnDownloadPng">PNG</a></li>
         </ul>
       </div>
-      <button id="btnImport" class="btn btn-outline-secondary ms-2">Import</button>
-      <input id="importFileInput" type="file" accept=".bpmn,.xml" class="d-none">
     </div>
+
+    <input id="importFileInput" type="file" accept=".bpmn,.xml" class="d-none">
 
     <!-- BPMN Canvas -->
     <div id="canvas"></div>
