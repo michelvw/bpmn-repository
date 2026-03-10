@@ -190,6 +190,25 @@ document.getElementById('btnDownloadBpmn').onclick = withErrorHandling(() => dow
 document.getElementById('btnDownloadSvg').onclick = withErrorHandling(() => downloadSvg(getDiagramName()));
 document.getElementById('btnDownloadPng').onclick = withErrorHandling(() => downloadPng(getDiagramName()));
 
+document.getElementById('btnImport').onclick = () => {
+  document.getElementById('importFileInput').click();
+};
+
+document.getElementById('importFileInput').onchange = withErrorHandling(async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const xml = await file.text();
+  await loadXML(xml);
+  currentDiagramId = null;
+  ui.resetDiagramDetails();
+  ui.showEditor();
+  ui.showToast('Diagram imported — save to store it', 'info');
+
+  // Reset file input so the same file can be re-imported if needed
+  e.target.value = '';
+});
+
 document.getElementById('btnHistory').onclick = withErrorHandling(() => openHistoryModal(currentDiagramId));
 document.getElementById('btnNewOverview').onclick = withErrorHandling(() => createNewDiagram(true));
 document.getElementById('btnNewInside').onclick = withErrorHandling(() => createNewDiagram(false));
