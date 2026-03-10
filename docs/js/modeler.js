@@ -4,8 +4,9 @@ let readOnly = false;
 /**
  * Initialize BPMN modeler
  */
-export function initModeler() {
+export function initModeler(onChanged) {
   modeler = new window.BpmnJS({ container: '#canvas' });
+  modeler.on('commandStack.changed', onChanged);
 }
 
 /**
@@ -99,10 +100,4 @@ function triggerDownload(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-/// Initialize modeler with change listener
-export function initModeler(onChanged) {
-  modeler = new window.BpmnJS({ container: '#canvas' });
-  modeler.on('commandStack.changed', onChanged);
 }
