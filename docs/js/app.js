@@ -8,7 +8,7 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentDiagramId = null;
 
-initModeler();
+initModeler(markDirty);
 
 function withErrorHandling(fn) {
   return async (...args) => {
@@ -28,7 +28,7 @@ async function loadOverview() {
   const data = await service.getDiagrams();
   ui.renderTable(
     data,
-    withErrorHandling(openDiagram),
+    (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
     withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
     withErrorHandling(async (id) => { await openHistoryModal(id); })
   );
@@ -47,6 +47,7 @@ async function openDiagram(id) {
   currentDiagramId = id;
 
   await loadXML(versionData.bpmn_xml);
+  markClean();
   ui.renderDiagramDetails(detailData);
   setReadOnly(false);
   ui.resetSaveButton(saveDiagram);
@@ -67,6 +68,7 @@ async function saveDiagram() {
         const details = await service.getDiagramDetails(currentDiagramId);
         ui.renderDiagramDetails(details);
         ui.showToast('Diagram saved');
+        markClean();
       });
     });
     return;
@@ -137,6 +139,7 @@ async function openHistoryModal(diagramId) {
 async function createNewDiagram(showEditorPage = true) {
   currentDiagramId = null;
   await newEmptyDiagram();
+  markClean();
   setReadOnly(false);
   ui.resetDiagramDetails();
   if(showEditorPage) ui.showEditor();
@@ -163,7 +166,7 @@ async function handleSignup(email, password) {
    EVENT BINDINGS
 ================================= */
 document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
-document.getElementById('btnBack').onclick = withErrorHandling(loadOverview);
+document.getElementById('btnBack').onclick = () => confirmIfDirty(withErrorHandling(loadOverview));
 document.getElementById('btnShare').onclick = () => {
   if (currentDiagramId) ui.showShareModal(generateShareLink(currentDiagramId));
 };
@@ -177,7 +180,9 @@ document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
       await service.deleteDiagram(currentDiagramId);
       currentDiagramId = null;
       await loadOverview();
-    })
+    }),
+    'Delete',
+    'btn-danger'
   );
 });
 
@@ -186,14 +191,29 @@ function getDiagramName() {
   return document.getElementById('diagramName').textContent.replace(' (read-only)', '').trim() || 'diagram';
 }
 
+//manage unsaved changes
+let isDirty = false;
+
+function markDirty() { isDirty = true; }
+function markClean() { isDirty = false; }
+
+function confirmIfDirty(onConfirm) {
+  if (!isDirty) { onConfirm(); return; }
+  ui.showConfirmModal(
+    'Unsaved Changes',
+    'You have unsaved changes. Are you sure you want to leave?',
+    onConfirm
+  );
+}
+
 document.getElementById('btnDownloadBpmn').onclick = withErrorHandling(() => downloadBpmn(getDiagramName()));
 document.getElementById('btnDownloadSvg').onclick = withErrorHandling(() => downloadSvg(getDiagramName()));
 document.getElementById('btnDownloadPng').onclick = withErrorHandling(() => downloadPng(getDiagramName()));
 
 const triggerImport = () => document.getElementById('importFileInput').click();
 
-document.getElementById('btnImportOverview').onclick = triggerImport;
-document.getElementById('btnImportInside').onclick = triggerImport;
+document.getElementById('btnImportInside').onclick = () => confirmIfDirty(triggerImport);
+document.getElementById('btnImportOverview').onclick = triggerImport; // overview has no editor ope
 
 document.getElementById('importFileInput').onchange = withErrorHandling(async (e) => {
   const file = e.target.files[0];
@@ -210,8 +230,8 @@ document.getElementById('importFileInput').onchange = withErrorHandling(async (e
 });
 
 document.getElementById('btnHistory').onclick = withErrorHandling(() => openHistoryModal(currentDiagramId));
-document.getElementById('btnNewOverview').onclick = withErrorHandling(() => createNewDiagram(true));
-document.getElementById('btnNewInside').onclick = withErrorHandling(() => createNewDiagram(false));
+document.getElementById('btnNewOverview').onclick = () => confirmIfDirty(withErrorHandling(() => createNewDiagram(true)));
+document.getElementById('btnNewInside').onclick = () => confirmIfDirty(withErrorHandling(() => createNewDiagram(false)));
 
 document.getElementById('btnSignup').onclick = withErrorHandling(() =>
   handleSignup(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
@@ -219,12 +239,12 @@ document.getElementById('btnSignup').onclick = withErrorHandling(() =>
 document.getElementById('btnLogin').onclick = withErrorHandling(() =>
   handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
 
-document.getElementById('btnLogout').onclick = withErrorHandling(async () => {
+document.getElementById('btnLogout').onclick = confirmIfDirty(withErrorHandling(async () => {
   const { error } = await supabase.auth.signOut();
   if (error) return ui.showToast(error.message, 'danger');
   currentUser = null;
   ui.showAuth();
-});
+}));
 
 document.getElementById('btnRename').onclick = withErrorHandling(() => {
   const nameEl = document.getElementById('diagramName');

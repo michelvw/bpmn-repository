@@ -59,7 +59,9 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
       showConfirmModal(
         'Delete Diagram',
         'This will delete the diagram and all version history. Are you sure?',
-        () => onDelete(d.id)
+        () => onDelete(d.id),
+        'Delete',
+        'btn-danger'
       );
     };
     tbody.appendChild(row);
@@ -275,7 +277,7 @@ export function showShareModal(link) {
   modal.show();
 }
 
-export function showConfirmModal(title, message, onConfirm) {
+export function showConfirmModal(title, message, onConfirm, confirmLabel = 'Confirm', confirmClass = 'btn-danger') {
   const modalEl = document.getElementById('confirmModal');
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
@@ -283,6 +285,9 @@ export function showConfirmModal(title, message, onConfirm) {
   document.getElementById('confirmModalBody').textContent = message;
 
   const confirmBtn = document.getElementById('confirmModalConfirm');
+  confirmBtn.textContent = confirmLabel;
+  confirmBtn.className = `btn ${confirmClass}`;
+
   const newConfirm = confirmBtn.cloneNode(true);
   confirmBtn.replaceWith(newConfirm);
 

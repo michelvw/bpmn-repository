@@ -55,6 +55,7 @@ export async function newEmptyDiagram() {
   await loadXML(empty);
 }
 
+//Download functions
 export async function downloadBpmn(filename = 'diagram') {
   const xml = await getXML();
   const blob = new Blob([xml], { type: 'application/xml' });
@@ -90,6 +91,7 @@ export async function downloadPng(filename = 'diagram') {
   img.src = url;
 }
 
+/// Helper to trigger file download
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -97,4 +99,10 @@ function triggerDownload(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/// Initialize modeler with change listener
+export function initModeler(onChanged) {
+  modeler = new window.BpmnJS({ container: '#canvas' });
+  modeler.on('commandStack.changed', onChanged);
 }
