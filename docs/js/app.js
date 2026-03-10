@@ -58,18 +58,12 @@ async function openDiagram(id) {
 ================================= */
 async function saveDiagram() {  
   if (!currentDiagramId) {
-    ui.showInputModal('Diagram Name', 'Enter a name...', async (name) => {
-      console.log('1. Got name:', name);
-      const data = await service.createDiagram(name);
-      console.log('2. Created diagram:', data);
-      currentDiagramId = data.id;
-      console.log('3. Set currentDiagramId:', currentDiagramId);
-      ui.showInputModal('Version Comment', 'Enter a comment...', async (comment) => {
-        console.log('4. Got comment:', comment);
-        const xml = await getXML();
-        console.log('5. Got XML');
-        await service.saveVersion(currentDiagramId, xml, comment);
-        console.log('6. Saved version');
+    ui.showInputModal('Diagram Name', 'Enter a name...', async (name) => {      
+      const data = await service.createDiagram(name);      
+      currentDiagramId = data.id;      
+      ui.showInputModal('Version Comment', 'Enter a comment...', async (comment) => {        
+        const xml = await getXML();        
+        await service.saveVersion(currentDiagramId, xml, comment);        
         const details = await service.getDiagramDetails(currentDiagramId);
         ui.renderDiagramDetails(details);
         ui.showToast('Diagram saved');
