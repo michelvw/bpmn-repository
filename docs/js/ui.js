@@ -241,8 +241,12 @@ export function showInputModal(title, placeholder, onConfirm) {
   const handleConfirm = () => {
     const value = field.value.trim();
     if (!value) return;
+    document.activeElement?.blur();
     modal.hide();
-    onConfirm(value);
+    onConfirm(value).catch(err => {
+      console.error(err);
+      showToast(err.message || 'Something went wrong', 'danger');
+    });
   };
 
   newConfirm.addEventListener('click', handleConfirm);
