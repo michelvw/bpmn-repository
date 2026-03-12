@@ -47,6 +47,7 @@ async function loadOverview() {
   );
   ui.resetSaveButton(saveDiagram);
   ui.showOverview();
+  markClean()
 }
 
 /* ===============================
