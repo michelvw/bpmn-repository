@@ -26,12 +26,33 @@ export async function getDiagrams() {
       id,
       name,
       updated_at,
-      diagram_versions(version)
+      diagram_versions(version, created_by)
     `)
     .order('updated_at', { ascending: false });
 
   if (error) throw error;
-  return data;
+
+  // Look up usernames for latest version creators
+  const allUserIds = [...new Set(
+    data.flatMap(d => d.diagram_versions.map(v => v.created_by)).filter(Boolean)
+  )];
+
+  if (allUserIds.length === 0) return data;
+
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id, username')
+    .in('id', allUserIds);
+
+  if (usersError) throw usersError;
+
+  return data.map(d => ({
+    ...d,
+    diagram_versions: d.diagram_versions.map(v => ({
+      ...v,
+      created_by_user: users.find(u => u.id === v.created_by) || null
+    }))
+  }));
 }
 
 /**
@@ -103,13 +124,33 @@ export async function getDiagramDetails(diagramId) {
       name,
       updated_at,
       owner:owner_id(username),
-      diagram_versions(version, comment)
+      diagram_versions(version, comment, created_by)
     `)
     .eq('id', diagramId)
     .single();
 
   if (error) throw error;
-  return data;
+
+  // Look up usernames for version creators
+  const versions = data.diagram_versions || [];
+  const userIds = [...new Set(versions.map(v => v.created_by).filter(Boolean))];
+
+  if (userIds.length === 0) return data;
+
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id, username')
+    .in('id', userIds);
+
+  if (usersError) throw usersError;
+
+  return {
+    ...data,
+    diagram_versions: versions.map(v => ({
+      ...v,
+      created_by_user: users.find(u => u.id === v.created_by) || null
+    }))
+  };
 }
 
 /**
@@ -130,12 +171,27 @@ export async function renameDiagram(id, newName) {
 export async function getVersionHistory(diagramId) {
   const { data, error } = await supabase
     .from('diagram_versions')
-    .select('id, version, comment, created_at')
+    .select('id, version, comment, created_at, created_by')
     .eq('diagram_id', diagramId)
     .order('version', { ascending: false });
 
   if (error) throw error;
-  return data;
+
+  // Look up usernames
+  const userIds = [...new Set(data.map(v => v.created_by).filter(Boolean))];
+  if (userIds.length === 0) return data;
+
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id, username')
+    .in('id', userIds);
+
+  if (usersError) throw usersError;
+
+  return data.map(v => ({
+    ...v,
+    created_by_user: users.find(u => u.id === v.created_by) || null
+  }));
 }
 
 /**

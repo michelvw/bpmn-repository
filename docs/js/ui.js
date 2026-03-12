@@ -47,7 +47,11 @@ export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
 
   diagrams.forEach(d => {
     const versions = d.diagram_versions || [];
-    const latestVersion = versions.length ? Math.max(...versions.map(v => v.version)) : '-';
+    const latestVersionObj = versions.length
+      ? versions.reduce((a, b) => (a.version > b.version ? a : b))
+      : null;
+    const latestVersion = latestVersionObj ? latestVersionObj.version : '-';
+    const latestCreatedBy = latestVersionObj?.created_by_user?.username || '-';
     const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
 
     const col = document.createElement('div');
@@ -59,11 +63,11 @@ export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
         </div>
         <div class="card-body">
           <h6 class="card-title mb-1 text-truncate">${d.name}</h6>
-          <small class="text-muted">
+          <small class="text-muted d-block">
             <i class="bi bi-clock me-1"></i>${dateStr}
-          </small><br>
-          <small class="text-muted">
-            <i class="bi bi-layers me-1"></i>Version ${latestVersion}
+          </small>
+          <small class="text-muted d-block">
+            <i class="bi bi-layers me-1"></i>Version ${latestVersion} by ${latestCreatedBy}
           </small>
         </div>
         <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
@@ -93,16 +97,11 @@ export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
       );
     };
 
-    // Clicking the tile itself opens the diagram
     col.querySelector('.diagram-tile').onclick = () => onOpen(d.id);
-
     grid.appendChild(col);
   });
 
-  // Set up lazy preview loading with IntersectionObserver
   setupLazyPreviews(onPreview);
-
-  // Set up search filtering
   setupSearch();
 }
 
@@ -172,6 +171,7 @@ export function renderDiagramDetails(diagram) {
   document.getElementById('diagramVersion').textContent = latest?.version || '-';
   document.getElementById('diagramComment').textContent = latest?.comment || '-';
   document.getElementById('diagramOwner').textContent = diagram.owner?.username || '-';
+  document.getElementById('diagramCreatedBy').textContent = latest?.created_by_user?.username || '-';
 
   const dateEl = document.getElementById('diagramDate');
   if (diagram.updated_at) {
@@ -187,6 +187,7 @@ export function resetDiagramDetails() {
   document.getElementById('diagramVersion').textContent = '-';
   document.getElementById('diagramComment').textContent = '-';
   document.getElementById('diagramOwner').textContent = '-';
+  document.getElementById('diagramCreatedBy').textContent = '-';
   document.getElementById('diagramDate').textContent = '-';
 }
 
@@ -210,7 +211,12 @@ export function renderVersionHistory(versions, handlers) {
       <div class="card-body">
         <h6 class="card-title mb-1">Version ${v.version}</h6>
         <h6 class="card-subtitle text-muted mb-2">${dateStr}</h6>
-        <p class="card-text mb-2">${v.comment || '-'}</p>
+        <p class="card-text mb-1">${v.comment || '-'}</p>
+        <p class="card-text mb-2">
+          <small class="text-muted">
+            <i class="bi bi-person me-1"></i>${v.created_by_user?.username || '-'}
+          </small>
+        </p>
         <div class="d-flex gap-1">
           <button class="btn btn-sm btn-outline-primary view-btn">
             <i class="bi bi-eye me-1"></i>View
