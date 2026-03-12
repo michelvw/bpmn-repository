@@ -47,9 +47,15 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
       <td>${dateStr}</td>
       <td>${latestVersion}</td>
       <td class="d-flex gap-1">
-        <button class="btn btn-sm btn-primary open-btn">Open</button>
-        <button class="btn btn-sm btn-outline-secondary history-btn">History</button>
-        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+        <button class="btn btn-sm btn-primary open-btn">
+          <i class="bi bi-folder2-open me-1"></i>Open
+        </button>
+        <button class="btn btn-sm btn-outline-secondary history-btn">
+          <i class="bi bi-clock-history me-1"></i>History
+        </button>
+        <button class="btn btn-sm btn-outline-danger delete-btn">
+          <i class="bi bi-trash me-1"></i>Delete
+        </button>
       </td>
     `;
 
@@ -64,6 +70,7 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
         'btn-danger'
       );
     };
+
     tbody.appendChild(row);
   });
 }
