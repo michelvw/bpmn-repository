@@ -67,7 +67,7 @@ export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
           </small>
         </div>
         <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
-          <button class="btn btn-sm btn-primary open-btn flex-grow-1">
+          <button class="btn btn-sm btn-outline-secondary open-btn flex-grow-1">
             <i class="bi bi-folder2-open me-1"></i>Open
           </button>
           <button class="btn btn-sm btn-outline-secondary history-btn">
