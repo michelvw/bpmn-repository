@@ -32,36 +32,58 @@ export function showEditor() {
 /* ===============================
    DIAGRAM TABLE
 ================================= */
-export function renderTable(diagrams, onOpen, onDelete, onHistory) {
-  const tbody = document.querySelector('#diagramTable tbody');
-  tbody.innerHTML = '';
+export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
+  const grid = document.getElementById('diagramGrid');
+  grid.innerHTML = '';
+
+  if (diagrams.length === 0) {
+    grid.innerHTML = `
+      <div class="col-12 text-center text-muted py-5">
+        <i class="bi bi-diagram-3" style="font-size: 3rem;"></i>
+        <p class="mt-3">No diagrams yet. Create your first one!</p>
+      </div>`;
+    return;
+  }
 
   diagrams.forEach(d => {
     const versions = d.diagram_versions || [];
     const latestVersion = versions.length ? Math.max(...versions.map(v => v.version)) : '-';
     const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
 
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${d.name}</td>
-      <td>${dateStr}</td>
-      <td>${latestVersion}</td>
-      <td class="d-flex gap-1">
-        <button class="btn btn-sm btn-primary open-btn">
-          <i class="bi bi-folder2-open me-1"></i>Open
-        </button>
-        <button class="btn btn-sm btn-outline-secondary history-btn">
-          <i class="bi bi-clock-history me-1"></i>History
-        </button>
-        <button class="btn btn-sm btn-outline-danger delete-btn">
-          <i class="bi bi-trash me-1"></i>Delete
-        </button>
-      </td>
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `
+      <div class="card diagram-tile h-100" data-id="${d.id}">
+        <div class="tile-preview">
+          <div class="preview-placeholder"><i class="bi bi-diagram-3"></i></div>
+        </div>
+        <div class="card-body">
+          <h6 class="card-title mb-1 text-truncate">${d.name}</h6>
+          <small class="text-muted">
+            <i class="bi bi-clock me-1"></i>${dateStr}
+          </small><br>
+          <small class="text-muted">
+            <i class="bi bi-layers me-1"></i>Version ${latestVersion}
+          </small>
+        </div>
+        <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
+          <button class="btn btn-sm btn-primary open-btn flex-grow-1">
+            <i class="bi bi-folder2-open me-1"></i>Open
+          </button>
+          <button class="btn btn-sm btn-outline-secondary history-btn">
+            <i class="bi bi-clock-history"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger delete-btn">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
     `;
 
-    row.querySelector('.open-btn').onclick = () => onOpen(d.id);
-    row.querySelector('.history-btn').onclick = () => onHistory(d.id);
-    row.querySelector('.delete-btn').onclick = () => {
+    col.querySelector('.open-btn').onclick = (e) => { e.stopPropagation(); onOpen(d.id); };
+    col.querySelector('.history-btn').onclick = (e) => { e.stopPropagation(); onHistory(d.id); };
+    col.querySelector('.delete-btn').onclick = (e) => {
+      e.stopPropagation();
       showConfirmModal(
         'Delete Diagram',
         'This will delete the diagram and all version history. Are you sure?',
@@ -71,7 +93,67 @@ export function renderTable(diagrams, onOpen, onDelete, onHistory) {
       );
     };
 
-    tbody.appendChild(row);
+    // Clicking the tile itself opens the diagram
+    col.querySelector('.diagram-tile').onclick = () => onOpen(d.id);
+
+    grid.appendChild(col);
+  });
+
+  // Set up lazy preview loading with IntersectionObserver
+  setupLazyPreviews(onPreview);
+
+  // Set up search filtering
+  setupSearch();
+}
+
+function setupLazyPreviews(onPreview) {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const tile = entry.target;
+        const id = tile.dataset.id;
+        const previewEl = tile.querySelector('.tile-preview');
+
+        // Only load if still showing placeholder
+        if (!previewEl.querySelector('.preview-placeholder')) return;
+
+        previewEl.innerHTML = '<span class="preview-loading">Loading preview...</span>';
+        observer.unobserve(tile);
+
+        onPreview(id).then(svg => {
+          if (svg) {
+            previewEl.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+            img.style.cssText = 'max-width:100%; max-height:160px; object-fit:contain;';
+            previewEl.appendChild(img);
+          } else {
+            previewEl.innerHTML = '<div class="preview-placeholder"><i class="bi bi-diagram-3"></i></div>';
+          }
+        }).catch(() => {
+          previewEl.innerHTML = '<div class="preview-placeholder"><i class="bi bi-diagram-3"></i></div>';
+        });
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.diagram-tile').forEach(tile => observer.observe(tile));
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('diagramSearch');
+  if (!searchInput) return;
+
+  // Remove previous listener by replacing element
+  const newSearch = searchInput.cloneNode(true);
+  searchInput.replaceWith(newSearch);
+
+  newSearch.addEventListener('input', () => {
+    const query = newSearch.value.toLowerCase().trim();
+    document.querySelectorAll('#diagramGrid .col').forEach(col => {
+      const name = col.querySelector('.card-title').textContent.toLowerCase();
+      col.style.display = name.includes(query) ? '' : 'none';
+    });
   });
 }
 

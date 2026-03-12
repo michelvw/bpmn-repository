@@ -91,3 +91,22 @@ function triggerDownload(blob, filename) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export async function generatePreview(xml) {
+  const container = document.createElement('div');
+  container.style.cssText = 'width:400px; height:300px; position:absolute; left:-9999px;';
+  document.body.appendChild(container);
+
+  const viewer = new window.BpmnViewer({ container });
+
+  try {
+    await viewer.importXML(xml);
+    const { svg } = await viewer.saveSVG();
+    return svg;
+  } catch {
+    return null;
+  } finally {
+    viewer.destroy();
+    document.body.removeChild(container);
+  }
+}

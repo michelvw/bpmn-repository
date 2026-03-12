@@ -1,4 +1,4 @@
-import { initModeler, newEmptyDiagram, loadXML, getXML, setReadOnly, downloadBpmn, downloadSvg, downloadPng } from './modeler.js';
+import { initModeler, newEmptyDiagram, loadXML, getXML, setReadOnly, downloadBpmn, downloadSvg, downloadPng, generatePreview } from './modeler.js';
 import * as service from './diagramService.js';
 import * as userService from './userService.js';
 import * as ui from './ui.js';
@@ -39,15 +39,18 @@ function withErrorHandling(fn) {
 ================================= */
 async function loadOverview() {
   const data = await service.getDiagrams();
-  ui.renderTable(
+  ui.renderGrid(
     data,
     (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
     withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
-    withErrorHandling(async (id) => { await openHistoryModal(id); })
+    withErrorHandling(async (id) => { await openHistoryModal(id); }),
+    async (id) => {
+      const versionData = await service.loadLatestVersion(id);
+      return generatePreview(versionData.bpmn_xml);
+    }
   );
   ui.resetSaveButton(saveDiagram);
   ui.showOverview();
-  markClean()
 }
 
 /* ===============================
