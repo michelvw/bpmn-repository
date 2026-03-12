@@ -153,7 +153,6 @@ export function closeVersionModal() {
 /* ===============================
    VIEWED VERSION (READ-ONLY)
 ================================= */
-let _restoreCallback = null;
 
 export function showViewedVersion(details, onRestore) {
   const nameEl = document.getElementById('diagramName');
