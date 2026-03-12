@@ -1,4 +1,4 @@
-import { initModeler, newEmptyDiagram, loadXML, getXML, downloadBpmn, downloadSvg, downloadPng } from './modeler.js';
+import { initModeler, newEmptyDiagram, loadXML, getXML, setReadOnly, downloadBpmn, downloadSvg, downloadPng } from './modeler.js';
 import * as service from './diagramService.js';
 import * as userService from './userService.js';
 import * as ui from './ui.js';
@@ -46,9 +46,10 @@ async function openDiagram(id) {
 
   currentDiagramId = id;
 
-  await loadXML(versionData.bpmn_xml, false);
+  await loadXML(versionData.bpmn_xml);
   markClean();
   ui.renderDiagramDetails(detailData);
+  setReadOnly(false);
   ui.resetSaveButton(saveDiagram);
   ui.showEditor();
 }
@@ -96,15 +97,17 @@ async function openHistoryModal(diagramId) {
       const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
       ui.showEditor();
-      await loadXML(versionData.bpmn_xml, true);
-      
+      await loadXML(versionData.bpmn_xml);
+      setReadOnly(true);
+
       const diagramDetails = await service.getDiagramDetails(currentDiagramId);
       const viewData = {
         ...diagramDetails,
         ...version
       };
 
-      ui.showViewedVersion(viewData, async () => {        
+      ui.showViewedVersion(viewData, async () => {
+        setReadOnly(false);
         await service.saveVersion(
           currentDiagramId,
           versionData.bpmn_xml,
@@ -118,7 +121,8 @@ async function openHistoryModal(diagramId) {
     },
 
     onRestore: async (version) => {
-      const versionData = await service.getVersionById(version.id);      
+      const versionData = await service.getVersionById(version.id);
+      setReadOnly(false);
       await service.saveVersion(currentDiagramId, versionData.bpmn_xml, `Restored from v${version.version}`);
       const details = await service.getDiagramDetails(currentDiagramId);
       ui.renderDiagramDetails(details);
@@ -135,7 +139,8 @@ async function openHistoryModal(diagramId) {
 async function createNewDiagram(showEditorPage = true) {
   currentDiagramId = null;
   await newEmptyDiagram();
-  markClean();  
+  markClean();
+  setReadOnly(false);
   ui.resetDiagramDetails();
   if(showEditorPage) ui.showEditor();
 }
@@ -281,8 +286,8 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   if(sessionData.session) {
     currentUser = sessionData.session.user;
     if(sharedId) {
-        await loadXML((await service.loadLatestVersion(sharedId)).bpmn_xml, true);
-        ui.showEditor()
+      await openDiagram(sharedId);
+      setReadOnly(true);
     } else {
       await loadOverview();
     }
