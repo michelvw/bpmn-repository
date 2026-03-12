@@ -354,19 +354,77 @@ export function showInputModal(title, placeholder, onConfirm) {
   modalEl.addEventListener('shown.bs.modal', () => field.focus(), { once: true });
 }
 
-export function showShareModal(link) {
+export function showShareModal(link, isPublic, collaborators, onTogglePublic, onAddCollaborator, onRemoveCollaborator) {
   const modalEl = document.getElementById('shareModal');
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-  document.getElementById('shareLink').value = link;
 
+  // Public toggle
+  const toggle = document.getElementById('togglePublic');
+  const linkSection = document.getElementById('publicLinkSection');
+  const shareLinkInput = document.getElementById('shareLink');
+
+  toggle.checked = isPublic;
+  linkSection.classList.toggle('d-none', !isPublic);
+  shareLinkInput.value = link;
+
+  // Clone toggle to remove old listeners
+  const newToggle = toggle.cloneNode(true);
+  toggle.replaceWith(newToggle);
+  newToggle.addEventListener('change', async () => {
+    await onTogglePublic(newToggle.checked);
+    linkSection.classList.toggle('d-none', !newToggle.checked);
+  });
+
+  // Copy button
   const copyBtn = document.getElementById('btnCopyLink');
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(link);
-    copyBtn.textContent = 'Copied!';
-    setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+    copyBtn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copied!';
+    setTimeout(() => copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy', 2000);
   };
 
+  // Render collaborators
+  renderCollaboratorList(collaborators, onRemoveCollaborator);
+
+  // Add collaborator
+  const addBtn = document.getElementById('btnAddCollaborator');
+  const usernameInput = document.getElementById('collaboratorUsername');
+
+  const newAddBtn = addBtn.cloneNode(true);
+  addBtn.replaceWith(newAddBtn);
+  usernameInput.value = '';
+
+  newAddBtn.addEventListener('click', async () => {
+    const username = usernameInput.value.trim();
+    if (!username) return;
+    await onAddCollaborator(username);
+    usernameInput.value = '';
+  });
+
   modal.show();
+}
+
+function renderCollaboratorList(collaborators, onRemove) {
+  const list = document.getElementById('collaboratorList');
+  list.innerHTML = '';
+
+  if (collaborators.length === 0) {
+    list.innerHTML = '<li class="list-group-item text-muted small">No collaborators yet.</li>';
+    return;
+  }
+
+  collaborators.forEach(c => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center px-0';
+    li.innerHTML = `
+      <span><i class="bi bi-person me-2"></i>${c.user?.username || 'Unknown'}</span>
+      <button class="btn btn-sm btn-outline-danger remove-btn">
+        <i class="bi bi-person-dash"></i>
+      </button>
+    `;
+    li.querySelector('.remove-btn').onclick = () => onRemove(c.id);
+    list.appendChild(li);
+  });
 }
 
 export function showConfirmModal(title, message, onConfirm, confirmLabel = 'Confirm', confirmClass = 'btn-danger') {

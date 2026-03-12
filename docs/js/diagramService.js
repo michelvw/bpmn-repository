@@ -151,3 +151,87 @@ export async function getVersionById(versionId) {
   if (error) throw error;
   return data;
 }
+
+/**
+ * Toggle public sharing
+ */
+export async function setPublicAccess(diagramId, isPublic) {
+  const { error } = await supabase
+    .from('diagrams')
+    .update({ is_public: isPublic })
+    .eq('id', diagramId);
+
+  if (error) throw error;
+}
+
+/**
+ * Get public access status
+ */
+export async function getPublicAccess(diagramId) {
+  const { data, error } = await supabase
+    .from('diagrams')
+    .select('is_public')
+    .eq('id', diagramId)
+    .single();
+
+  if (error) throw error;
+  return data.is_public;
+}
+
+/**
+ * Get collaborators for a diagram
+ */
+export async function getCollaborators(diagramId) {
+  const { data, error } = await supabase
+    .from('diagram_collaborators')
+    .select(`
+      id,
+      user_id,
+      user:user_id(username)
+    `)
+    .eq('diagram_id', diagramId);
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Add collaborator by username
+ */
+export async function addCollaborator(diagramId, username) {
+  // Look up user by username
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('username', username)
+    .single();
+
+  if (userError || !userData) throw new Error(`User "${username}" not found`);
+
+  const currentUser = await getCurrentUser();
+
+  const { error } = await supabase
+    .from('diagram_collaborators')
+    .insert({
+      diagram_id: diagramId,
+      user_id: userData.id,
+      granted_by: currentUser.id
+    });
+
+  if (error) {
+    if (error.code === '23505') throw new Error('User is already a collaborator');
+    throw error;
+  }
+}
+
+/**
+ * Remove collaborator
+ */
+export async function removeCollaborator(collaboratorId) {
+  const { error } = await supabase
+    .from('diagram_collaborators')
+    .delete()
+    .eq('id', collaboratorId);
+
+  if (error) throw error;
+}

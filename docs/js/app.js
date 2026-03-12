@@ -185,9 +185,49 @@ async function handleSignup(email, password) {
 ================================= */
 document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
 document.getElementById('btnBack').onclick = () => confirmIfDirty(withErrorHandling(loadOverview));
-document.getElementById('btnShare').onclick = () => {
-  if (currentDiagramId) ui.showShareModal(generateShareLink(currentDiagramId));
-};
+document.getElementById('btnShare').onclick = withErrorHandling(async () => {
+  if (!currentDiagramId) return ui.showToast('Save the diagram first before sharing.', 'warning');
+
+  const [isPublic, collaborators] = await Promise.all([
+    service.getPublicAccess(currentDiagramId),
+    service.getCollaborators(currentDiagramId)
+  ]);
+
+  ui.showShareModal(
+    generateShareLink(currentDiagramId),
+    isPublic,
+    collaborators,
+    // onTogglePublic
+    withErrorHandling(async (value) => {
+      await service.setPublicAccess(currentDiagramId, value);
+      ui.showToast(value ? 'Public sharing enabled' : 'Public sharing disabled', 'info');
+    }),
+    // onAddCollaborator
+    withErrorHandling(async (username) => {
+      await service.addCollaborator(currentDiagramId, username);
+      const updated = await service.getCollaborators(currentDiagramId);
+      ui.showShareModal(
+        generateShareLink(currentDiagramId),
+        await service.getPublicAccess(currentDiagramId),
+        updated,
+        async (value) => { await service.setPublicAccess(currentDiagramId, value); },
+        async (username) => {},
+        withErrorHandling(async (id) => {
+          await service.removeCollaborator(id);
+        })
+      );
+      ui.showToast('Collaborator added', 'success');
+    }),
+    // onRemoveCollaborator
+    withErrorHandling(async (id) => {
+      await service.removeCollaborator(id);
+      const updated = await service.getCollaborators(currentDiagramId);
+      const currentIsPublic = await service.getPublicAccess(currentDiagramId);
+      renderCollaboratorList(updated);
+      ui.showToast('Collaborator removed', 'success');
+    })
+  );
+});
 
 document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
   if (!currentDiagramId) return;
@@ -286,11 +326,20 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   const sharedId = getSharedDiagramId();
   const { data: sessionData } = await supabase.auth.getSession();
 
-  if(sessionData.session) {
+  if (sharedId && !sessionData.session) {
+    // Unauthenticated public viewer
+    const versionData = await service.loadLatestVersion(sharedId);
+    await loadXML(versionData.bpmn_xml, true);
+    ui.showEditor();
+    return;
+  }
+
+  if (sessionData.session) {
     currentUser = sessionData.session.user;
-    if(sharedId) {
-      await openDiagram(sharedId);
-      setReadOnly(true);
+    if (sharedId) {
+      const versionData = await service.loadLatestVersion(sharedId);
+      await loadXML(versionData.bpmn_xml, true);
+      ui.showEditor();
     } else {
       await loadOverview();
     }
