@@ -8,7 +8,20 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentDiagramId = null;
 
-initModeler(markDirty);
+//manage unsaved changes
+let isDirty = false;
+
+function markDirty() { isDirty = true; }
+function markClean() { isDirty = false; }
+
+function confirmIfDirty(onConfirm) {
+  if (!isDirty) { onConfirm(); return; }
+  ui.showConfirmModal(
+    'Unsaved Changes',
+    'You have unsaved changes. Are you sure you want to leave?',
+    onConfirm
+  );
+}
 
 function withErrorHandling(fn) {
   return async (...args) => {
@@ -191,21 +204,6 @@ function getDiagramName() {
   return document.getElementById('diagramName').textContent.replace(' (read-only)', '').trim() || 'diagram';
 }
 
-//manage unsaved changes
-let isDirty = false;
-
-function markDirty() { isDirty = true; }
-function markClean() { isDirty = false; }
-
-function confirmIfDirty(onConfirm) {
-  if (!isDirty) { onConfirm(); return; }
-  ui.showConfirmModal(
-    'Unsaved Changes',
-    'You have unsaved changes. Are you sure you want to leave?',
-    onConfirm
-  );
-}
-
 document.getElementById('btnDownloadBpmn').onclick = withErrorHandling(() => downloadBpmn(getDiagramName()));
 document.getElementById('btnDownloadSvg').onclick = withErrorHandling(() => downloadSvg(getDiagramName()));
 document.getElementById('btnDownloadPng').onclick = withErrorHandling(() => downloadPng(getDiagramName()));
@@ -295,3 +293,5 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
     ui.showAuth();
   }
 }));
+
+initModeler(markDirty);
