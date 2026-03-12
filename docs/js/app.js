@@ -60,7 +60,7 @@ async function openDiagram(id) {
 
   currentDiagramId = id;
 
-  await loadXML(versionData.bpmn_xml);
+  await loadXML(versionData.bpmn_xml, false);
   markClean();
   ui.renderDiagramDetails(detailData);
   setReadOnly(false);
@@ -111,7 +111,7 @@ async function openHistoryModal(diagramId) {
       const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
       ui.showEditor();
-      await loadXML(versionData.bpmn_xml);
+      await loadXML(versionData.bpmn_xml, true);
       setReadOnly(true);
 
       const diagramDetails = await service.getDiagramDetails(currentDiagramId);

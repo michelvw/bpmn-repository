@@ -1,40 +1,42 @@
-let modeler;
-let readOnly = false;
+let modeler = null;
+let _onChanged = null;
 
-/**
- * Initialize BPMN modeler
- */
-export function initModeler(onChanged) {
-  modeler = new window.BpmnJS({ container: '#canvas' });
-  modeler.on('commandStack.changed', onChanged);
+function createModeler(readOnly) {
+  if (modeler) {
+    modeler.destroy();
+    modeler = null;
+  }
+
+  if (readOnly) {
+    modeler = new window.BpmnViewer({ container: '#canvas' });
+  } else {
+    modeler = new window.BpmnModeler({ container: '#canvas' });
+    modeler.on('commandStack.changed', _onChanged);
+  }
 }
 
-/**
- * Load XML into modeler
- */
-export async function loadXML(xml) {
+export function initModeler(onChanged) {
+  _onChanged = onChanged;
+  createModeler(false);
+}
+
+export async function loadXML(xml, readOnly = false) {
+  const needsSwap = (readOnly && !(modeler instanceof window.BpmnViewer)) ||
+                    (!readOnly && !(modeler instanceof window.BpmnModeler));
+  if (needsSwap) createModeler(readOnly);
   await modeler.importXML(xml);
 }
 
-/**
- * Get current diagram XML
- */
+export function setReadOnly(state) {
+  // No-op — kept for backwards compatibility
+}
+
 export async function getXML() {
   return (await modeler.saveXML({ format: true })).xml;
 }
 
-/**
- * Set read-only mode
- */
-export function setReadOnly(state) {
-  readOnly = state;
-  modeler.get('canvas').getContainer().style.pointerEvents = state ? 'none' : 'auto';
-}
-
-/**
- * Create new empty diagram
- */
 export async function newEmptyDiagram() {
+  createModeler(false);
   const empty = `<?xml version="1.0" encoding="UTF-8"?>
   <bpmn:definitions
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -44,19 +46,14 @@ export async function newEmptyDiagram() {
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
     id="Definitions_1"
     targetNamespace="http://bpmn.io/schema/bpmn">
-
     <bpmn:process id="Process_1" isExecutable="false" />
-
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
       <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1" />
     </bpmndi:BPMNDiagram>
-
   </bpmn:definitions>`;
-
-  await loadXML(empty);
+  await modeler.importXML(empty);
 }
 
-//Download functions
 export async function downloadBpmn(filename = 'diagram') {
   const xml = await getXML();
   const blob = new Blob([xml], { type: 'application/xml' });
@@ -71,11 +68,9 @@ export async function downloadSvg(filename = 'diagram') {
 
 export async function downloadPng(filename = 'diagram') {
   const { svg } = await modeler.saveSVG();
-
   const img = new Image();
   const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(svgBlob);
-
   img.onload = () => {
     const canvas = document.createElement('canvas');
     canvas.width = img.width;
@@ -83,16 +78,11 @@ export async function downloadPng(filename = 'diagram') {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
-
-    canvas.toBlob(blob => {
-      triggerDownload(blob, `${filename}.png`);
-    }, 'image/png');
+    canvas.toBlob(blob => triggerDownload(blob, `${filename}.png`), 'image/png');
   };
-
   img.src = url;
 }
 
-/// Helper to trigger file download
 function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
