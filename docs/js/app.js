@@ -156,6 +156,7 @@ async function createNewDiagram(showEditorPage = true) {
   markClean();
   setReadOnly(false);
   ui.resetDiagramDetails();
+  ui.resetSaveButton(saveDiagram);
   if(showEditorPage) ui.showEditor();
 }
 
