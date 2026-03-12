@@ -184,15 +184,27 @@ export async function getPublicAccess(diagramId) {
 export async function getCollaborators(diagramId) {
   const { data, error } = await supabase
     .from('diagram_collaborators')
-    .select(`
-      id,
-      user_id,
-      user:user_id(username)
-    `)
+    .select('id, user_id')
     .eq('diagram_id', diagramId);
 
   if (error) throw error;
-  return data;
+
+  // Look up usernames separately
+  const userIds = data.map(c => c.user_id);
+  if (userIds.length === 0) return [];
+
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id, username')
+    .in('id', userIds);
+
+  if (usersError) throw usersError;
+
+  // Merge username into collaborator records
+  return data.map(c => ({
+    ...c,
+    user: users.find(u => u.id === c.user_id) || null
+  }));
 }
 
 /**
