@@ -167,14 +167,14 @@ export function showViewedVersion(details, onRestore) {
   dateEl.textContent = d && !isNaN(d) ? d.toLocaleString() : '-';
 
   const btnSave = document.getElementById('btnSave');
-  btnSave.textContent = 'Restore as Latest';
+  btnSave.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Restore as Latest';
   btnSave.classList.replace('btn-primary', 'btn-success');
   btnSave.onclick = onRestore ?? null;
 }
 
 export function resetSaveButton(onSave) {
   const btnSave = document.getElementById('btnSave');
-  btnSave.textContent = 'Save';
+  btnSave.innerHTML = '<i class="bi bi-floppy"></i> Save';
   btnSave.classList.replace('btn-success', 'btn-primary');
   btnSave.onclick = onSave;
 }

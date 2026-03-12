@@ -5,7 +5,8 @@
   <title>BPMN Repository</title>
 
   <!-- Bootstrap CSS -->
-  <link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <!-- BPMN libraries -->
   <link rel="stylesheet" href="./css/diagram-js.css">
@@ -102,14 +103,18 @@
             New Diagram
           </button>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" id="btnNewOverview">Blank Diagram</a></li>
-            <li><a class="dropdown-item" id="btnImportOverview">Import Diagram</a></li>
+            <li><a class="dropdown-item" id="btnNewOverview"><i class="bi bi-file-earmark me-2"></i>Blank Diagram</a></li>
+            <li><a class="dropdown-item" id="btnImportOverview"><i class="bi bi-upload me-2"></i>Import Diagram</a></li>
           </ul>
         </div>
       </div>
       <div>
-        <button id="btnProfile" class="btn btn-info me-2">Profile</button>
-        <button id="btnLogout" class="btn btn-danger">Logout</button>
+        <button id="btnProfile" class="btn btn-outline-secondary me-2">
+          <i class="bi bi-person-circle"></i> Profile
+        </button>
+        <button id="btnLogout" class="btn btn-outline-danger">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
       </div>
     </div>
 
@@ -127,60 +132,96 @@
   </div>
 
   <!-- EDITOR PAGE -->
-  <div id="editorPage" class="container-fluid d-none">
-    <div class="diagram-header">
-      <h2 id="diagramName"></h2>
-      <button id="btnRename" class="btn btn-secondary btn-sm">Rename</button>
-    </div>
+  <!-- EDITOR PAGE -->
+<div id="editorPage" class="container-fluid d-none">
 
-    <!-- Toolbar -->
-    <div class="editor-toolbar">
-      <button id="btnSave" class="btn btn-primary me-2">Save</button>
-      <button id="btnBack" class="btn btn-secondary me-2">Back</button>
-      <button id="btnShare" class="btn btn-info me-2">Share</button>
-      <div class="btn-group me-2">
-        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
-          New
+  <!-- Navbar -->
+  <nav class="navbar navbar-light bg-white border-bottom mb-2">
+    <div class="container-fluid px-0">
+
+      <!-- Diagram name + rename -->
+      <div class="d-flex align-items-center me-3">
+        <h6 id="diagramName" class="mb-0 me-2 fw-semibold"></h6>
+        <button id="btnRename" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-pencil"></i> Rename
         </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" id="btnNewInside">Blank Diagram</a></li>
-          <li><a class="dropdown-item" id="btnImportInside">Import Diagram</a></li>
-        </ul>
       </div>
-      <button id="btnDelete" class="btn btn-danger me-2">Delete</button>
-      <button id="btnHistory" class="btn btn-warning me-2">History</button>
-      <div class="btn-group">
-        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-          Download
+
+      <!-- Toolbar actions -->
+      <div class="d-flex align-items-center flex-wrap gap-1">
+
+        <!-- New dropdown -->
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-file-earmark"></i> New
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" id="btnNewInside"><i class="bi bi-file-earmark me-2"></i>Blank Diagram</a></li>
+            <li><a class="dropdown-item" id="btnImportInside"><i class="bi bi-upload me-2"></i>Import Diagram</a></li>
+          </ul>
+        </div>
+
+        <!-- Back / Open -->
+        <button id="btnBack" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-folder2-open"></i> Open
         </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" id="btnDownloadBpmn">BPMN (XML)</a></li>
-          <li><a class="dropdown-item" id="btnDownloadSvg">SVG</a></li>
-          <li><a class="dropdown-item" id="btnDownloadPng">PNG</a></li>
-        </ul>
+
+        <!-- Save -->
+        <button id="btnSave" class="btn btn-sm btn-primary">
+          <i class="bi bi-floppy"></i> Save
+        </button>
+
+        <!-- Share -->
+        <button id="btnShare" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-share"></i> Share
+        </button>
+
+        <!-- History -->
+        <button id="btnHistory" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-clock-history"></i> History
+        </button>
+
+        <!-- Download dropdown -->
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download"></i> Download
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" id="btnDownloadBpmn"><i class="bi bi-file-earmark-code me-2"></i>BPMN (XML)</a></li>
+            <li><a class="dropdown-item" id="btnDownloadSvg"><i class="bi bi-file-earmark-image me-2"></i>SVG</a></li>
+            <li><a class="dropdown-item" id="btnDownloadPng"><i class="bi bi-file-earmark-image me-2"></i>PNG</a></li>
+          </ul>
+        </div>
+
+        <!-- Delete -->
+        <button id="btnDelete" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+
       </div>
     </div>
+  </nav>
 
-    <input id="importFileInput" type="file" accept=".bpmn,.xml" class="d-none">
+  <input id="importFileInput" type="file" accept=".bpmn,.xml" class="d-none">
 
-    <!-- BPMN Canvas -->
-    <div id="canvas"></div>
+  <!-- BPMN Canvas -->
+  <div id="canvas"></div>
 
-      <!-- Toggle Details Button -->
-    <button id="btnToggleDetails" class="btn btn-outline-secondary btn-sm mt-2"
-            data-bs-toggle="collapse" data-bs-target="#diagramDetails">
-      Diagram details
-    </button>
+  <!-- Toggle Details Button -->
+  <button id="btnToggleDetails" class="btn btn-outline-secondary btn-sm mt-2"
+          data-bs-toggle="collapse" data-bs-target="#diagramDetails">
+    <i class="bi bi-info-circle"></i> Diagram details
+  </button>
 
-    <!-- Collapsible Diagram Details -->
-    <div class="collapse mt-2" id="diagramDetails">
-      <div class="card card-body">
-        <p>Version: <span id="diagramVersion">-</span></p>
-        <p>Comment: <span id="diagramComment">-</span></p>
-        <p>Owner: <span id="diagramOwner">-</span></p>
-        <p>Last Modified: <span id="diagramDate">-</span></p>
-      </div>
+  <!-- Collapsible Diagram Details -->
+  <div class="collapse mt-2" id="diagramDetails">
+    <div class="card card-body">
+      <p>Version: <span id="diagramVersion">-</span></p>
+      <p>Comment: <span id="diagramComment">-</span></p>
+      <p>Owner: <span id="diagramOwner">-</span></p>
+      <p>Last Modified: <span id="diagramDate">-</span></p>
     </div>
+  </div>
   </div>
 
   <!-- VERSION MODAL -->
