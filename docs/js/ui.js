@@ -130,8 +130,12 @@ export function renderVersionHistory(versions, handlers) {
         <h6 class="card-subtitle text-muted mb-2">${dateStr}</h6>
         <p class="card-text mb-2">${v.comment || '-'}</p>
         <div class="d-flex gap-1">
-          <button class="btn btn-sm btn-outline-primary view-btn">View</button>
-          <button class="btn btn-sm btn-success restore-btn">Restore as Latest</button>
+          <button class="btn btn-sm btn-outline-primary view-btn">
+            <i class="bi bi-eye me-1"></i>View
+          </button>
+          <button class="btn btn-sm btn-outline-success restore-btn">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Restore as Latest
+          </button>
         </div>
       </div>
     `;
