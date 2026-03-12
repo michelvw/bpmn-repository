@@ -210,23 +210,14 @@ export async function getCollaborators(diagramId) {
 /**
  * Add collaborator by username
  */
-export async function addCollaborator(diagramId, username) {
-  // Look up user by username
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('username', username)
-    .single();
-
-  if (userError || !userData) throw new Error(`User "${username}" not found`);
-
+export async function addCollaborator(diagramId, userId) {
   const currentUser = await getCurrentUser();
 
   const { error } = await supabase
     .from('diagram_collaborators')
     .insert({
       diagram_id: diagramId,
-      user_id: userData.id,
+      user_id: userId,
       granted_by: currentUser.id
     });
 

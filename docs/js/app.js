@@ -181,53 +181,48 @@ async function handleSignup(email, password) {
 }
 
 /* ===============================
-   EVENT BINDINGS
+   OPEN SHARE MODAL
 ================================= */
-document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
-document.getElementById('btnBack').onclick = () => confirmIfDirty(withErrorHandling(loadOverview));
-document.getElementById('btnShare').onclick = withErrorHandling(async () => {
+async function openShareModal() {
   if (!currentDiagramId) return ui.showToast('Save the diagram first before sharing.', 'warning');
 
-  const [isPublic, collaborators] = await Promise.all([
+  const [isPublic, collaborators, users] = await Promise.all([
     service.getPublicAccess(currentDiagramId),
-    service.getCollaborators(currentDiagramId)
+    service.getCollaborators(currentDiagramId),
+    userService.getUsers()
   ]);
+
+  // Filter out the current user from the list
+  const filteredUsers = users.filter(u => u.id !== currentUser.id);
 
   ui.showShareModal(
     generateShareLink(currentDiagramId),
     isPublic,
     collaborators,
-    // onTogglePublic
+    filteredUsers,
     withErrorHandling(async (value) => {
       await service.setPublicAccess(currentDiagramId, value);
       ui.showToast(value ? 'Public sharing enabled' : 'Public sharing disabled', 'info');
     }),
-    // onAddCollaborator
-    withErrorHandling(async (username) => {
-      await service.addCollaborator(currentDiagramId, username);
-      const updated = await service.getCollaborators(currentDiagramId);
-      ui.showShareModal(
-        generateShareLink(currentDiagramId),
-        await service.getPublicAccess(currentDiagramId),
-        updated,
-        async (value) => { await service.setPublicAccess(currentDiagramId, value); },
-        async (username) => {},
-        withErrorHandling(async (id) => {
-          await service.removeCollaborator(id);
-        })
-      );
+    withErrorHandling(async (userId) => {
+      await service.addCollaborator(currentDiagramId, userId);
       ui.showToast('Collaborator added', 'success');
+      await openShareModal();
     }),
-    // onRemoveCollaborator
     withErrorHandling(async (id) => {
       await service.removeCollaborator(id);
-      const updated = await service.getCollaborators(currentDiagramId);
-      const currentIsPublic = await service.getPublicAccess(currentDiagramId);
-      renderCollaboratorList(updated);
       ui.showToast('Collaborator removed', 'success');
+      await openShareModal();
     })
   );
-});
+}
+
+/* ===============================
+   EVENT BINDINGS
+================================= */
+document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
+document.getElementById('btnBack').onclick = () => confirmIfDirty(withErrorHandling(loadOverview));
+document.getElementById('btnShare').onclick = withErrorHandling(openShareModal);
 
 document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
   if (!currentDiagramId) return;

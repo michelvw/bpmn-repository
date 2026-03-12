@@ -16,3 +16,13 @@ export async function updateProfile(username) {
     .update({ username })
     .eq('id', (await supabase.auth.getUser()).data.user.id);
 }
+
+export async function getUsers() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, username')
+    .order('username', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}

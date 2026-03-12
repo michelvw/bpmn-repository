@@ -354,7 +354,7 @@ export function showInputModal(title, placeholder, onConfirm) {
   modalEl.addEventListener('shown.bs.modal', () => field.focus(), { once: true });
 }
 
-export function showShareModal(link, isPublic, collaborators, onTogglePublic, onAddCollaborator, onRemoveCollaborator) {
+export function showShareModal(link, isPublic, collaborators, users, onTogglePublic, onAddCollaborator, onRemoveCollaborator) {
   const modalEl = document.getElementById('shareModal');
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
@@ -367,7 +367,6 @@ export function showShareModal(link, isPublic, collaborators, onTogglePublic, on
   linkSection.classList.toggle('d-none', !isPublic);
   shareLinkInput.value = link;
 
-  // Clone toggle to remove old listeners
   const newToggle = toggle.cloneNode(true);
   toggle.replaceWith(newToggle);
   newToggle.addEventListener('change', async () => {
@@ -383,22 +382,31 @@ export function showShareModal(link, isPublic, collaborators, onTogglePublic, on
     setTimeout(() => copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy', 2000);
   };
 
-  // Render collaborators
+  // Populate user select — exclude already added collaborators
+  const select = document.getElementById('collaboratorSelect');
+  const collaboratorUserIds = collaborators.map(c => c.user_id);
+  select.innerHTML = '<option value="">Select a user...</option>';
+  users
+    .filter(u => !collaboratorUserIds.includes(u.id))
+    .forEach(u => {
+      const option = document.createElement('option');
+      option.value = u.id;
+      option.textContent = u.username;
+      select.appendChild(option);
+    });
+
+  // Render collaborator list
   renderCollaboratorList(collaborators, onRemoveCollaborator);
 
-  // Add collaborator
+  // Add collaborator button
   const addBtn = document.getElementById('btnAddCollaborator');
-  const usernameInput = document.getElementById('collaboratorUsername');
-
   const newAddBtn = addBtn.cloneNode(true);
   addBtn.replaceWith(newAddBtn);
-  usernameInput.value = '';
 
   newAddBtn.addEventListener('click', async () => {
-    const username = usernameInput.value.trim();
-    if (!username) return;
-    await onAddCollaborator(username);
-    usernameInput.value = '';
+    const userId = select.value;
+    if (!userId) return ui.showToast('Please select a user', 'warning');
+    await onAddCollaborator(userId);
   });
 
   modal.show();
