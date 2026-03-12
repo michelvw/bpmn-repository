@@ -237,7 +237,7 @@ document.getElementById('btnSignup').onclick = withErrorHandling(() =>
 document.getElementById('btnLogin').onclick = withErrorHandling(() =>
   handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
 
-document.getElementById('btnLogout').onclick = confirmIfDirty(withErrorHandling(async () => {
+document.getElementById('btnLogout').onclick = () => confirmIfDirty(withErrorHandling(async () => {
   const { error } = await supabase.auth.signOut();
   if (error) return ui.showToast(error.message, 'danger');
   currentUser = null;
