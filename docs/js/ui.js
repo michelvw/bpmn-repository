@@ -206,16 +206,34 @@ function setupSearch() {
   const searchInput = document.getElementById('diagramSearch');
   if (!searchInput) return;
 
-  // Remove previous listener by replacing element
   const newSearch = searchInput.cloneNode(true);
   searchInput.replaceWith(newSearch);
 
   newSearch.addEventListener('input', () => {
     const query = newSearch.value.toLowerCase().trim();
+    let visibleCount = 0;
+
     document.querySelectorAll('#diagramGrid .col').forEach(col => {
-      const name = col.querySelector('.card-title').textContent.toLowerCase();
-      col.style.display = name.includes(query) ? '' : 'none';
+      const name = col.querySelector('.card-title')?.textContent.toLowerCase();
+      if (!name) return; // skip divider cols
+      const visible = name.includes(query);
+      col.style.display = visible ? '' : 'none';
+      if (visible) visibleCount++;
     });
+
+    // Show/hide no results message
+    let noResults = document.getElementById('noSearchResults');
+    if (visibleCount === 0) {
+      if (!noResults) {
+        const msg = document.createElement('div');
+        msg.id = 'noSearchResults';
+        msg.className = 'col-12 text-center text-muted py-4';
+        msg.innerHTML = `<i class="bi bi-search" style="font-size: 2rem;"></i><p class="mt-2">No diagrams match your search.</p>`;
+        document.getElementById('diagramGrid').appendChild(msg);
+      }
+    } else {
+      noResults?.remove();
+    }
   });
 }
 
