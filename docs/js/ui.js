@@ -383,7 +383,7 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
 
       wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
       wrapper.querySelectorAll('.color-option').forEach(option => {
-        option.addEventListener('mousedown', (e) => {
+        option.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           onColorChange(t.tagId, option.dataset.color);
