@@ -185,7 +185,13 @@ async function handleLogin(email, password) {
 }
 
 async function handleSignup(email, password) {
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
+  });
   if (error) return ui.showToast(error.message, 'danger');
   ui.showToast('Check your email to confirm your account.', 'info');
 }
@@ -371,12 +377,20 @@ document.getElementById('btnSaveProfile').onclick = async () => {
    STARTUP
 ================================= */
 window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
-  // Check for password reset token in URL hash
   const hash = new URLSearchParams(window.location.hash.replace('#', '?'));
+  
   if (hash.get('type') === 'recovery') {
     ui.showAuth();
     const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
     resetModal.show();
+    return;
+  }
+
+  if (hash.get('type') === 'signup') {
+    // Clear the hash and show login page with a success message
+    window.history.replaceState({}, '', window.location.pathname);
+    ui.showAuth();
+    ui.showToast('Email confirmed! You can now log in.', 'success');
     return;
   }
 
