@@ -1,20 +1,27 @@
 import { supabase } from './supabase.js';
 
-export async function getProfile() {
+async function getCurrentUserId() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error('Not authenticated');
+  return user.id;
+}
 
+export async function getProfile() {
+  const id = await getCurrentUserId();
   return await supabase
     .from('users')
     .select('username')
-    .eq('id', (await supabase.auth.getUser()).data.user.id)
+    .eq('id', id)
     .single();
 }
 
 export async function updateProfile(username) {
-
+  const id = await getCurrentUserId();
   return await supabase
     .from('users')
     .update({ username })
-    .eq('id', (await supabase.auth.getUser()).data.user.id);
+    .eq('id', id);
 }
 
 export async function getUsers() {
