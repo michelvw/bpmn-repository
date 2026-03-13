@@ -63,7 +63,7 @@ export function showEditor() {
 /* ===============================
    DIAGRAM TABLE
 ================================= */
-export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
+export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory, onPreview) {
   const grid = document.getElementById('diagramGrid');
   grid.innerHTML = '';
 
@@ -76,61 +76,86 @@ export function renderGrid(diagrams, onOpen, onDelete, onHistory, onPreview) {
     return;
   }
 
-  diagrams.forEach(d => {
-    const versions = d.diagram_versions || [];
-    const latestVersionObj = versions.length
-      ? versions.reduce((a, b) => (a.version > b.version ? a : b))
-      : null;
-    const latestVersion = latestVersionObj ? latestVersionObj.version : '-';
-    const latestCreatedBy = latestVersionObj?.created_by_user?.username || '-';
-    const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
+  // Split into owned and collaborated
+  const owned = diagrams.filter(d => d.owner_id === currentUserId);
+  const collaborated = diagrams.filter(d => d.owner_id !== currentUserId);
 
-    const col = document.createElement('div');
-    col.className = 'col';
-    col.innerHTML = `
-      <div class="card diagram-tile h-100" data-id="${d.id}">
-        <div class="tile-preview">
-          <div class="preview-placeholder"><i class="bi bi-diagram-3"></i></div>
-        </div>
-        <div class="card-body">
-          <h6 class="card-title mb-1 text-truncate">${d.name}</h6>
-          <small class="text-muted d-block">
-            <i class="bi bi-clock me-1"></i>${dateStr}
-          </small>
-          <small class="text-muted d-block">
-            <i class="bi bi-layers me-1"></i>Version ${latestVersion} by ${latestCreatedBy}
-          </small>
-        </div>
-        <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
-          <button class="btn btn-sm btn-outline-secondary open-btn flex-grow-1">
-            <i class="bi bi-folder2-open me-1"></i>Open
-          </button>
-          <button class="btn btn-sm btn-outline-secondary history-btn">
-            <i class="bi bi-clock-history"></i>
-          </button>
-          <button class="btn btn-sm btn-outline-danger delete-btn">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-    `;
+  const renderTiles = (list, isCollaborated) => {
+    list.forEach(d => {
+      const versions = d.diagram_versions || [];
+      const latestVersionObj = versions.length
+        ? versions.reduce((a, b) => (a.version > b.version ? a : b))
+        : null;
+      const latestVersion = latestVersionObj ? latestVersionObj.version : '-';
+      const latestCreatedBy = latestVersionObj?.created_by_user?.username || '-';
+      const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
 
-    col.querySelector('.open-btn').onclick = (e) => { e.stopPropagation(); onOpen(d.id); };
-    col.querySelector('.history-btn').onclick = (e) => { e.stopPropagation(); onHistory(d.id); };
-    col.querySelector('.delete-btn').onclick = (e) => {
-      e.stopPropagation();
-      showConfirmModal(
-        'Delete Diagram',
-        'This will delete the diagram and all version history. Are you sure?',
-        () => onDelete(d.id),
-        'Delete',
-        'btn-danger'
-      );
-    };
+      const col = document.createElement('div');
+      col.className = 'col';
+      col.innerHTML = `
+        <div class="card diagram-tile h-100" data-id="${d.id}">
+          <div class="tile-preview">
+            <div class="preview-placeholder"><i class="bi bi-diagram-3"></i></div>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <h6 class="card-title mb-0 text-truncate me-2">${d.name}</h6>
+              ${isCollaborated ? '<span class="badge bg-secondary text-nowrap"><i class="bi bi-people me-1"></i>Shared with me</span>' : ''}
+            </div>
+            <small class="text-muted d-block">
+              <i class="bi bi-clock me-1"></i>${dateStr}
+            </small>
+            <small class="text-muted d-block">
+              <i class="bi bi-layers me-1"></i>Version ${latestVersion} by ${latestCreatedBy}
+            </small>
+          </div>
+          <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
+            <button class="btn btn-sm btn-outline-secondary open-btn flex-grow-1">
+              <i class="bi bi-folder2-open me-1"></i>Open
+            </button>
+            <button class="btn btn-sm btn-outline-secondary history-btn">
+              <i class="bi bi-clock-history"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger delete-btn">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
 
-    col.querySelector('.diagram-tile').onclick = () => onOpen(d.id);
-    grid.appendChild(col);
-  });
+      col.querySelector('.open-btn').onclick = (e) => { e.stopPropagation(); onOpen(d.id); };
+      col.querySelector('.history-btn').onclick = (e) => { e.stopPropagation(); onHistory(d.id); };
+      col.querySelector('.delete-btn').onclick = (e) => {
+        e.stopPropagation();
+        showConfirmModal(
+          'Delete Diagram',
+          'This will delete the diagram and all version history. Are you sure?',
+          () => onDelete(d.id),
+          'Delete',
+          'btn-danger'
+        );
+      };
+
+      col.querySelector('.diagram-tile').onclick = () => onOpen(d.id);
+      grid.appendChild(col);
+    });
+  };
+
+  // Render owned diagrams
+  if (owned.length > 0) {
+    renderTiles(owned, false);
+  }
+
+  // Divider + collaborated section
+  if (collaborated.length > 0) {
+    if (owned.length > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'col-12 mt-2 mb-1';
+      divider.innerHTML = '<h6 class="text-muted"><i class="bi bi-people me-2"></i>Shared with me</h6><hr class="mt-1">';
+      grid.appendChild(divider);
+    }
+    renderTiles(collaborated, true);
+  }
 
   setupLazyPreviews(onPreview);
   setupSearch();

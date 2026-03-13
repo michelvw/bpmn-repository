@@ -41,6 +41,7 @@ async function loadOverview() {
   const data = await service.getDiagrams();
   ui.renderGrid(
     data,
+    currentUser.id,
     (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
     withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
     withErrorHandling(async (id) => { await openHistoryModal(id); }),
