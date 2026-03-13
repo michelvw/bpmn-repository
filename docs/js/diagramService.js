@@ -324,11 +324,20 @@ export async function removeCollaborator(collaboratorId) {
 export async function getTags() {
   const { data, error } = await supabase
     .from('tags')
-    .select('id, name')
+    .select('id, name, color')
     .order('name', { ascending: true });
 
   if (error) throw error;
   return data;
+}
+
+export async function updateTagColor(tagId, color) {
+  const { error } = await supabase
+    .from('tags')
+    .update({ color })
+    .eq('id', tagId);
+
+  if (error) throw error;
 }
 
 /**
@@ -337,22 +346,26 @@ export async function getTags() {
 export async function getDiagramTags(diagramId) {
   const { data, error } = await supabase
     .from('diagram_tags')
-    .select('id, tag_id, tags(id, name)')
+    .select('id, tag_id, tags(id, name, color)')
     .eq('diagram_id', diagramId);
 
   if (error) throw error;
-  return data.map(dt => ({ id: dt.id, tagId: dt.tag_id, name: dt.tags.name }));
+  return data.map(dt => ({ 
+    id: dt.id, 
+    tagId: dt.tag_id, 
+    name: dt.tags.name,
+    color: dt.tags.color
+  }));
 }
 
 /**
  * Add tag to diagram — creates tag if it doesn't exist
  */
-export async function addTagToDiagram(diagramId, tagName) {
+export async function addTagToDiagram(diagramId, tagName, color = '#0d6efd') {
   const user = await getCurrentUser();
   const normalizedName = tagName.trim().toLowerCase();
   if (!normalizedName) throw new Error('Tag name cannot be empty');
 
-  // Get or create tag
   let tag;
   const { data: existing } = await supabase
     .from('tags')
@@ -365,14 +378,13 @@ export async function addTagToDiagram(diagramId, tagName) {
   } else {
     const { data: created, error: createError } = await supabase
       .from('tags')
-      .insert({ name: normalizedName, created_by: user.id })
+      .insert({ name: normalizedName, created_by: user.id, color })
       .select('id')
       .single();
     if (createError) throw createError;
     tag = created;
   }
 
-  // Link tag to diagram
   const { error } = await supabase
     .from('diagram_tags')
     .insert({ diagram_id: diagramId, tag_id: tag.id });

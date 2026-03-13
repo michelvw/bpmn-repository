@@ -130,7 +130,6 @@
   </div>
 </div>
 
-  <!-- OVERVIEW PAGE -->
 <!-- OVERVIEW PAGE -->
 <div id="overviewPage" class="container-fluid d-none">
   <div class="d-flex justify-content-between align-items-center my-3">
@@ -218,12 +217,29 @@
   <nav class="navbar navbar-light bg-white border-bottom mb-2">
     <div class="container-fluid px-0">
 
-      <!-- Diagram name + rename -->
-      <div class="d-flex align-items-center me-3">
-        <h6 id="diagramName" class="mb-0 me-2 fw-semibold"></h6>
+      <!-- Diagram name + rename + tags -->
+      <div class="d-flex align-items-center me-3 gap-2">
+        <h6 id="diagramName" class="mb-0 fw-semibold"></h6>
         <button id="btnRename" class="btn btn-sm btn-outline-secondary">
           <i class="bi bi-pencil"></i> Rename
         </button>
+        <!-- Tags dropdown -->
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                  id="btnTagsDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+            <i class="bi bi-tag"></i> Tags
+          </button>
+          <div class="dropdown-menu p-2" style="min-width: 220px;">
+            <div id="currentTags" class="mb-2"></div>
+            <div class="input-group input-group-sm">
+              <input type="text" id="tagInput" class="form-control" placeholder="Add tag...">
+              <button class="btn btn-primary" id="btnAddTag">
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+            <div id="tagSuggestions" class="mt-1"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Toolbar actions -->
@@ -233,17 +249,7 @@
           <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" 
                   id="btnTagsDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside">
             <i class="bi bi-tag"></i> Tags
-          </button>
-          <div class="dropdown-menu p-2" style="min-width: 220px;">
-            <div id="currentTags" class="mb-2 d-flex flex-wrap gap-1"></div>
-            <div class="input-group input-group-sm">
-              <input type="text" id="tagInput" class="form-control" placeholder="Add tag...">
-              <button class="btn btn-primary" id="btnAddTag">
-                <i class="bi bi-plus"></i>
-              </button>
-            </div>
-            <div id="tagSuggestions" class="mt-1"></div>
-          </div>
+          </button>          
         </div>
 
         <!-- New dropdown -->

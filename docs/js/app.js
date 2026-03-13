@@ -312,32 +312,47 @@ async function openTagsDropdown() {
     service.getTags()
   ]);
 
+  const refreshDropdown = async () => {
+    const [updatedTags, updatedAllTags] = await Promise.all([
+      service.getDiagramTags(currentDiagramId),
+      service.getTags()
+    ]);
+    ui.renderTagsDropdown(
+      updatedTags,
+      updatedAllTags,
+      withErrorHandling(async (tagName, color) => {
+        await service.addTagToDiagram(currentDiagramId, tagName, color);
+        ui.showToast('Tag added', 'success');
+        await refreshDropdown();
+      }),
+      withErrorHandling(async (diagramTagId) => {
+        await service.removeTagFromDiagram(diagramTagId);
+        ui.showToast('Tag removed', 'success');
+        await refreshDropdown();
+      }),
+      withErrorHandling(async (tagId, color) => {
+        await service.updateTagColor(tagId, color);
+        await refreshDropdown();
+      })
+    );
+  };
+
   ui.renderTagsDropdown(
     currentTags,
     allTags,
-    withErrorHandling(async (tagName) => {
-      await service.addTagToDiagram(currentDiagramId, tagName);
-      const [updatedTags, updatedAllTags] = await Promise.all([
-        service.getDiagramTags(currentDiagramId),
-        service.getTags()
-      ]);
-      ui.renderTagsDropdown(updatedTags, updatedAllTags,
-        async (name) => {},
-        async (id) => {}
-      );
-      ui.showToast(`Tag added`, 'success');
+    withErrorHandling(async (tagName, color) => {
+      await service.addTagToDiagram(currentDiagramId, tagName, color);
+      ui.showToast('Tag added', 'success');
+      await refreshDropdown();
     }),
     withErrorHandling(async (diagramTagId) => {
       await service.removeTagFromDiagram(diagramTagId);
-      const [updatedTags, updatedAllTags] = await Promise.all([
-        service.getDiagramTags(currentDiagramId),
-        service.getTags()
-      ]);
-      ui.renderTagsDropdown(updatedTags, updatedAllTags,
-        async (name) => {},
-        async (id) => {}
-      );
       ui.showToast('Tag removed', 'success');
+      await refreshDropdown();
+    }),
+    withErrorHandling(async (tagId, color) => {
+      await service.updateTagColor(tagId, color);
+      await refreshDropdown();
     })
   );
 }

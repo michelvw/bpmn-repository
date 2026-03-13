@@ -1,6 +1,19 @@
 let currentView = 'tiles'; // 'tiles' or 'table'
 let activeTagFilter = null;
 
+const TAG_COLORS = [
+  { name: 'Blue',   value: '#0d6efd' },
+  { name: 'Purple', value: '#6f42c1' },
+  { name: 'Pink',   value: '#d63384' },
+  { name: 'Red',    value: '#dc3545' },
+  { name: 'Orange', value: '#fd7e14' },
+  { name: 'Yellow', value: '#ffc107' },
+  { name: 'Green',  value: '#198754' },
+  { name: 'Teal',   value: '#20c997' },
+  { name: 'Cyan',   value: '#0dcaf0' },
+  { name: 'Gray',   value: '#6c757d' },
+];
+
 /* ===============================
    UI MODULE
 ================================= */
@@ -137,7 +150,7 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
      
       const tags = d.diagram_tags || [];
       const tagsHtml = tags.length
-        ? tags.map(t => `<span class="badge bg-primary me-1">${t.tags.name}</span>`).join('')
+        ? tags.map(t => `<span class="badge me-1" style="background-color: ${t.tags.color}">${t.tags.name}</span>`).join('')
         : '';
 
       const col = document.createElement('div');
@@ -307,7 +320,11 @@ export function renderTagFilterBar(tags, onFilter) {
 
   tags.forEach(tag => {
     const btn = document.createElement('button');
-    btn.className = `btn btn-sm ${activeTagFilter === tag.id ? 'btn-primary' : 'btn-outline-primary'}`;
+    btn.className = 'btn btn-sm';
+    btn.style.backgroundColor = activeTagFilter === tag.id ? tag.color : 'transparent';
+    btn.style.color = activeTagFilter === tag.id ? '#fff' : tag.color;
+    btn.style.borderColor = tag.color;
+    btn.style.border = `1px solid ${tag.color}`;
     btn.textContent = tag.name;
     btn.onclick = () => {
       activeTagFilter = activeTagFilter === tag.id ? null : tag.id;
@@ -318,41 +335,93 @@ export function renderTagFilterBar(tags, onFilter) {
   });
 }
 
-export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove) {
+export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColorChange) {
   const currentTagsEl = document.getElementById('currentTags');
   const suggestionsEl = document.getElementById('tagSuggestions');
   const tagInput = document.getElementById('tagInput');
 
-  // Render current tags as removable badges
+  // Selected colour state
+  let selectedColor = TAG_COLORS[0].value;
+
+  // Render current tags as removable badges with colour change option
   currentTagsEl.innerHTML = '';
   if (currentTags.length === 0) {
-    currentTagsEl.innerHTML = '<small class="text-muted">No tags yet.</small>';
+    currentTagsEl.innerHTML = '<small class="text-muted d-block mb-1">No tags yet.</small>';
   } else {
     currentTags.forEach(t => {
-      const badge = document.createElement('span');
-      badge.className = 'badge bg-primary d-flex align-items-center gap-1';
-      badge.innerHTML = `${t.name} <i class="bi bi-x" style="cursor:pointer"></i>`;
-      badge.querySelector('i').onclick = () => onRemove(t.id);
-      currentTagsEl.appendChild(badge);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'd-flex align-items-center gap-1 mb-1';
+      wrapper.innerHTML = `
+        <span class="badge d-flex align-items-center gap-1" style="background-color: ${t.color}">
+          ${t.name}
+          <i class="bi bi-x remove-tag" style="cursor:pointer"></i>
+        </span>
+        <div class="d-flex gap-1 flex-wrap" style="max-width: 160px;">
+          ${TAG_COLORS.map(c => `
+            <div class="color-swatch ${c.value === t.color ? 'border border-dark' : ''}" 
+                 data-color="${c.value}"
+                 data-tag-id="${t.tagId}"
+                 title="${c.name}"
+                 style="width:16px; height:16px; border-radius:50%; background:${c.value}; cursor:pointer; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}">
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
+      wrapper.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.onclick = () => onColorChange(swatch.dataset.tagId, swatch.dataset.color);
+      });
+
+      currentTagsEl.appendChild(wrapper);
     });
   }
 
-  // Render suggestions — existing tags not yet on this diagram
+  // Colour picker for new tags
+  const colorPickerHtml = `
+    <div class="d-flex gap-1 flex-wrap mb-1" id="newTagColorPicker">
+      ${TAG_COLORS.map(c => `
+        <div class="color-swatch-new ${c.value === selectedColor ? 'selected' : ''}"
+             data-color="${c.value}"
+             title="${c.name}"
+             style="width:16px; height:16px; border-radius:50%; background:${c.value}; cursor:pointer; border: 2px solid ${c.value === selectedColor ? '#000' : 'transparent'}">
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // Render suggestions
   const currentTagIds = currentTags.map(t => t.tagId);
   const suggestions = allTags.filter(t => !currentTagIds.includes(t.id));
-  suggestionsEl.innerHTML = '';
+  suggestionsEl.innerHTML = colorPickerHtml;
 
   if (suggestions.length > 0) {
+    const suggestionsWrapper = document.createElement('div');
+    suggestionsWrapper.className = 'd-flex flex-wrap gap-1 mb-1';
     suggestions.forEach(t => {
       const btn = document.createElement('button');
-      btn.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
+      btn.className = 'btn btn-sm';
+      btn.style.backgroundColor = t.color;
+      btn.style.color = '#fff';
+      btn.style.border = 'none';
       btn.textContent = t.name;
-      btn.onclick = () => { onAdd(t.name); };
-      suggestionsEl.appendChild(btn);
+      btn.onclick = () => onAdd(t.name, t.color);
+      suggestionsWrapper.appendChild(btn);
     });
+    suggestionsEl.appendChild(suggestionsWrapper);
   }
 
-  // Wire up add button and enter key
+  // Wire up colour picker for new tags
+  suggestionsEl.querySelectorAll('.color-swatch-new').forEach(swatch => {
+    swatch.onclick = () => {
+      selectedColor = swatch.dataset.color;
+      suggestionsEl.querySelectorAll('.color-swatch-new').forEach(s => {
+        s.style.border = `2px solid ${s.dataset.color === selectedColor ? '#000' : 'transparent'}`;
+      });
+    };
+  });
+
+  // Wire up add button
   const addBtn = document.getElementById('btnAddTag');
   const newAddBtn = addBtn.cloneNode(true);
   addBtn.replaceWith(newAddBtn);
@@ -360,7 +429,7 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove) {
   const handleAdd = () => {
     const value = tagInput.value.trim();
     if (!value) return;
-    onAdd(value);
+    onAdd(value, selectedColor);
     tagInput.value = '';
   };
 
@@ -408,7 +477,7 @@ export function renderTable(diagrams, currentUserId, onOpen, onDelete, onHistory
           ${d.name}
           ${isCollaborated ? '<span class="badge bg-secondary ms-1"><i class="bi bi-people"></i> Shared</span>' : ''}
         </td>
-        <td>${tags.map(t => `<span class="badge bg-primary me-1">${t.tags.name}</span>`).join('') || '-'}</td>
+        <td>${tags.map(t => `<span class="badge me-1" style="background-color: ${t.tags.color}">${t.tags.name}</span>`).join('') || '-'}</td>
         <td>${dateStr}</td>
         <td>${latestVersion}</td>
         <td class="d-flex gap-1">
