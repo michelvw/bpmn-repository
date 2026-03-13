@@ -149,10 +149,12 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
   // Divider + collaborated section
   if (collaborated.length > 0) {
     if (owned.length > 0) {
-      const divider = document.createElement('div');
-      divider.className = 'col-12 mt-2 mb-1';
-      divider.innerHTML = '<h6 class="text-muted"><i class="bi bi-people me-2"></i>Shared with me</h6><hr class="mt-1">';
-      grid.appendChild(divider);
+      grid.insertAdjacentHTML('beforeend', `
+        <div class="col-12">
+          <h6 class="text-muted mt-3"><i class="bi bi-people me-2"></i>Shared with me</h6>
+          <hr class="mt-1 mb-3">
+        </div>
+      `);
     }
     renderTiles(collaborated, true);
   }
