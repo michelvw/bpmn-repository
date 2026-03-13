@@ -177,6 +177,9 @@ async function createNewDiagram(showEditorPage = true) {
    AUTH
 ================================= */
 async function handleLogin(email, password) {
+  if (!email) return ui.showToast('Please enter your email address.', 'warning');
+  if (!password) return ui.showToast('Please enter your password.', 'warning');
+
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return ui.showToast(error.message, 'danger');
 
@@ -184,7 +187,14 @@ async function handleLogin(email, password) {
   await loadOverview();
 }
 
-async function handleSignup(email, password) {
+async function handleSignup(email, password, confirmPassword) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) return ui.showToast('Please enter an email address.', 'warning');
+  if (!emailRegex.test(email)) return ui.showToast('Please enter a valid email address.', 'warning');
+  if (!password) return ui.showToast('Please enter a password.', 'warning');
+  if (password.length < 6) return ui.showToast('Password must be at least 6 characters.', 'warning');
+  if (password !== confirmPassword) return ui.showToast('Passwords do not match.', 'warning');
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -192,8 +202,12 @@ async function handleSignup(email, password) {
       emailRedirectTo: window.location.origin + window.location.pathname
     }
   });
+
   if (error) return ui.showToast(error.message, 'danger');
   ui.showToast('Check your email to confirm your account.', 'info');
+
+  // Hide confirm field again
+  document.getElementById('confirmPasswordSignup').classList.add('d-none');
 }
 
 /* ===============================
@@ -290,8 +304,22 @@ document.getElementById('btnHistory').onclick = withErrorHandling(() => openHist
 document.getElementById('btnNewOverview').onclick = () => confirmIfDirty(withErrorHandling(() => createNewDiagram(true)));
 document.getElementById('btnNewInside').onclick = () => confirmIfDirty(withErrorHandling(() => createNewDiagram(false)));
 
-document.getElementById('btnSignup').onclick = withErrorHandling(() =>
-  handleSignup(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
+// Show confirm password field when Sign Up is clicked
+document.getElementById('btnSignup').onclick = withErrorHandling(() => {
+  const confirmField = document.getElementById('confirmPasswordSignup');
+  if (confirmField.classList.contains('d-none')) {
+    // First click — show the confirm field
+    confirmField.classList.remove('d-none');
+    confirmField.focus();
+    return;
+  }
+  // Second click — proceed with signup
+  handleSignup(
+    document.getElementById('emailInput').value,
+    document.getElementById('passwordInput').value,
+    document.getElementById('confirmPasswordSignup').value
+  );
+});
 
 document.getElementById('btnLogin').onclick = withErrorHandling(() =>
   handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
