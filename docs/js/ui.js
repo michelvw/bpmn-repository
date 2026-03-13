@@ -1,5 +1,5 @@
 let currentView = 'tiles'; // 'tiles' or 'table'
-let activeTagFilter = null;
+let activeTagFilter = new Set();
 
 const TAG_COLORS = [
   { name: 'Blue',   value: '#0d6efd' },
@@ -303,7 +303,6 @@ function setupSearch() {
 
 export function renderTagFilterBar(tags, onFilter) {
   const bar = document.getElementById('tagFilterBar');
-  // Keep the label, remove old tag buttons
   bar.innerHTML = '<small class="text-muted me-1"><i class="bi bi-tag me-1"></i>Filter:</small>';
 
   if (tags.length === 0) {
@@ -313,21 +312,29 @@ export function renderTagFilterBar(tags, onFilter) {
 
   // All button
   const allBtn = document.createElement('button');
-  allBtn.className = `btn btn-sm ${activeTagFilter === null ? 'btn-secondary' : 'btn-outline-secondary'}`;
+  allBtn.className = `btn btn-sm ${activeTagFilter.size === 0 ? 'btn-secondary' : 'btn-outline-secondary'}`;
   allBtn.textContent = 'All';
-  allBtn.onclick = () => { activeTagFilter = null; onFilter(null); renderTagFilterBar(tags, onFilter); };
+  allBtn.onclick = () => {
+    activeTagFilter.clear();
+    onFilter(activeTagFilter);
+    renderTagFilterBar(tags, onFilter);
+  };
   bar.appendChild(allBtn);
 
   tags.forEach(tag => {
+    const isActive = activeTagFilter.has(tag.id);
     const btn = document.createElement('button');
     btn.className = 'btn btn-sm';
-    btn.style.backgroundColor = activeTagFilter === tag.id ? tag.color : 'transparent';
-    btn.style.color = activeTagFilter === tag.id ? '#fff' : tag.color;
-    btn.style.borderColor = tag.color;
+    btn.style.backgroundColor = isActive ? tag.color : 'transparent';
+    btn.style.color = isActive ? '#fff' : tag.color;
     btn.style.border = `1px solid ${tag.color}`;
     btn.textContent = tag.name;
     btn.onclick = () => {
-      activeTagFilter = activeTagFilter === tag.id ? null : tag.id;
+      if (activeTagFilter.has(tag.id)) {
+        activeTagFilter.delete(tag.id);
+      } else {
+        activeTagFilter.add(tag.id);
+      }
       onFilter(activeTagFilter);
       renderTagFilterBar(tags, onFilter);
     };

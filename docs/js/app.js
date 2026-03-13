@@ -50,12 +50,8 @@ async function loadOverview() {
 
   allDiagramsCache = data;
 
-  ui.renderTagFilterBar(tags, (tagId) => {
-    const filtered = tagId
-      ? allDiagramsCache.filter(d =>
-          (d.diagram_tags || []).some(t => t.tag_id === tagId))
-      : allDiagramsCache;
-    ui.renderGrid(filtered, currentUser.id,
+  const renderBoth = (diagrams) => {
+    ui.renderGrid(diagrams, currentUser.id,
       (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
       withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
       withErrorHandling(async (id) => { await openHistoryModal(id); }),
@@ -64,28 +60,23 @@ async function loadOverview() {
         return generatePreview(versionData.bpmn_xml);
       }
     );
-    ui.renderTable(filtered, currentUser.id,
+    ui.renderTable(diagrams, currentUser.id,
       (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
       withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
       withErrorHandling(async (id) => { await openHistoryModal(id); })
     );
+  };
+
+  ui.renderTagFilterBar(tags, (tagIds) => {
+    const filtered = tagIds.size === 0
+      ? allDiagramsCache
+      : allDiagramsCache.filter(d =>
+          (d.diagram_tags || []).some(t => tagIds.has(t.tag_id))
+        );
+    renderBoth(filtered);
   });
 
-  ui.renderGrid(data, currentUser.id,
-    (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
-    withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
-    withErrorHandling(async (id) => { await openHistoryModal(id); }),
-    async (id) => {
-      const versionData = await service.loadLatestVersion(id);
-      return generatePreview(versionData.bpmn_xml);
-    }
-  );
-
-  ui.renderTable(data, currentUser.id,
-    (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
-    withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
-    withErrorHandling(async (id) => { await openHistoryModal(id); })
-  );
+  renderBoth(data);
 
   ui.resetSaveButton(saveDiagram);
   ui.showOverview();
