@@ -362,15 +362,18 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
           <ul class="dropdown-menu p-2" style="min-width: 120px;">
             <li><small class="text-muted px-2">Change colour</small></li>
             ${TAG_COLORS.map(c => `
-              <li>
-                <a class="dropdown-item d-flex align-items-center gap-2 color-option py-1" 
-                   data-color="${c.value}" href="#">
-                  <span style="width:14px; height:14px; border-radius:50%; background:${c.value}; display:inline-block; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}"></span>
-                  ${c.name}
-                  ${c.value === t.color ? '<i class="bi bi-check ms-auto"></i>' : ''}
-                </a>
-              </li>
-            `).join('')}
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2 color-option py-1" 
+                data-color="${c.value}"
+                data-tag-id="${t.tagId}"
+                href="#"
+                onclick="return false;">
+                <span style="width:14px; height:14px; border-radius:50%; background:${c.value}; display:inline-block; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}"></span>
+                ${c.name}
+                ${c.value === t.color ? '<i class="bi bi-check ms-auto"></i>' : ''}
+              </a>
+            </li>
+          `).join('')}
           </ul>
         </div>
         <button class="btn btn-sm btn-link text-danger p-0 ms-2 remove-tag">
@@ -380,10 +383,11 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
 
       wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
       wrapper.querySelectorAll('.color-option').forEach(option => {
-        option.onclick = (e) => {
+        option.addEventListener('mousedown', (e) => {
           e.preventDefault();
+          e.stopPropagation();
           onColorChange(t.tagId, option.dataset.color);
-        };
+        });
       });
 
       currentTagsEl.appendChild(wrapper);
