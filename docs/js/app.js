@@ -322,10 +322,9 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   const { data: sessionData } = await supabase.auth.getSession();
 
   if (sharedId && !sessionData.session) {
-    // Unauthenticated public viewer
     const versionData = await service.loadLatestVersion(sharedId);
     await loadXML(versionData.bpmn_xml, true);
-    ui.showEditor();
+    ui.showAnonymousEditor();
     return;
   }
 

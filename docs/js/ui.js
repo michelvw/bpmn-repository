@@ -23,10 +23,36 @@ export function showOverview() {
   document.getElementById('overviewPage').classList.remove('d-none');
 }
 
+export function showAnonymousEditor() {
+  document.getElementById('authPage').classList.add('d-none');
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.remove('d-none');
+
+  // Hide everything except download
+  document.getElementById('btnSave').classList.add('d-none');
+  document.getElementById('btnBack').classList.add('d-none');
+  document.getElementById('btnShare').classList.add('d-none');
+  document.getElementById('btnNewInside').closest('.btn-group').classList.add('d-none');
+  document.getElementById('btnDelete').classList.add('d-none');
+  document.getElementById('btnHistory').classList.add('d-none');
+  document.getElementById('btnRename').classList.add('d-none');
+  document.getElementById('btnToggleDetails').classList.add('d-none');
+}
+
 export function showEditor() {
   document.getElementById('authPage').classList.add('d-none');
   document.getElementById('overviewPage').classList.add('d-none');
   document.getElementById('editorPage').classList.remove('d-none');
+
+  // Restore all toolbar elements
+  document.getElementById('btnSave').classList.remove('d-none');
+  document.getElementById('btnBack').classList.remove('d-none');
+  document.getElementById('btnShare').classList.remove('d-none');
+  document.getElementById('btnNewInside').closest('.btn-group').classList.remove('d-none');
+  document.getElementById('btnDelete').classList.remove('d-none');
+  document.getElementById('btnHistory').classList.remove('d-none');
+  document.getElementById('btnRename').classList.remove('d-none');
+  document.getElementById('btnToggleDetails').classList.remove('d-none');
 }
 
 /* ===============================
