@@ -320,11 +320,12 @@ async function openTagsDropdown() {
     ui.renderTagsDropdown(
       updatedTags,
       updatedAllTags,
-      withErrorHandling(async (tagName, color) => {
-        await service.addTagToDiagram(currentDiagramId, tagName, color);
-        ui.showToast('Tag added', 'success');
+      withErrorHandling(async (tagId, color) => {
+        console.log('updating color', tagId, color);
+        await service.updateTagColor(tagId, color);
+        console.log('color updated');
         await refreshDropdown();
-      }),
+      })
       withErrorHandling(async (diagramTagId) => {
         await service.removeTagFromDiagram(diagramTagId);
         ui.showToast('Tag removed', 'success');
