@@ -20,6 +20,8 @@ async function getCurrentUser() {
  * RLS should already restrict results to owner
  */
 export async function getDiagrams() {
+  const user = await getCurrentUser();
+
   const { data, error } = await supabase
     .from('diagrams')
     .select(`
@@ -28,6 +30,7 @@ export async function getDiagrams() {
       updated_at,
       diagram_versions(version, created_by)
     `)
+    .or(`owner_id.eq.${user.id},id.in.(${await getCollaboratorDiagramIds(user.id)})`)
     .order('updated_at', { ascending: false });
 
   if (error) throw error;
@@ -53,6 +56,17 @@ export async function getDiagrams() {
       created_by_user: users.find(u => u.id === v.created_by) || null
     }))
   }));
+}
+
+async function getCollaboratorDiagramIds(userId) {
+  const { data, error } = await supabase
+    .from('diagram_collaborators')
+    .select('diagram_id')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  if (!data.length) return 'null'; // Supabase .in() needs a fallback
+  return data.map(c => c.diagram_id).join(',');
 }
 
 /**
