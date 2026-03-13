@@ -30,7 +30,7 @@ export async function getDiagrams() {
       id,
       name,
       updated_at,
-      owner_id
+      owner_id,
       diagram_versions(version, created_by)
     `)
     .order('updated_at', { ascending: false });
