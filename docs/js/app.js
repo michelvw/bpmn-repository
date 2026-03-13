@@ -50,6 +50,8 @@ async function loadOverview() {
 
   allDiagramsCache = data;
 
+  console.log(data[0]?.diagram_tags)
+
   const renderBoth = (diagrams) => {
     ui.renderGrid(diagrams, currentUser.id,
       (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
