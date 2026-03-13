@@ -100,6 +100,7 @@ async function saveDiagram() {
     const details = await service.getDiagramDetails(currentDiagramId);
     ui.renderDiagramDetails(details);
     ui.showToast('Diagram saved');
+    markClean();
   });
 }
 
