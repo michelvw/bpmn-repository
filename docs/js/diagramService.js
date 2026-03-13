@@ -22,7 +22,9 @@ async function getCurrentUser() {
 export async function getDiagrams() {
   const user = await getCurrentUser();
 
-  const { data, error } = await supabase
+  const collaboratorDiagramIds = await getCollaboratorDiagramIds(user.id);
+
+  let query = supabase
     .from('diagrams')
     .select(`
       id,
@@ -30,12 +32,17 @@ export async function getDiagrams() {
       updated_at,
       diagram_versions(version, created_by)
     `)
-    .or(`owner_id.eq.${user.id},id.in.(${await getCollaboratorDiagramIds(user.id)})`)
     .order('updated_at', { ascending: false });
 
+  if (collaboratorDiagramIds.length > 0) {
+    query = query.or(`owner_id.eq.${user.id},id.in.(${collaboratorDiagramIds.join(',')})`);
+  } else {
+    query = query.eq('owner_id', user.id);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
 
-  // Look up usernames for latest version creators
   const allUserIds = [...new Set(
     data.flatMap(d => d.diagram_versions.map(v => v.created_by)).filter(Boolean)
   )];
@@ -65,8 +72,7 @@ async function getCollaboratorDiagramIds(userId) {
     .eq('user_id', userId);
 
   if (error) throw error;
-  if (!data.length) return 'null'; // Supabase .in() needs a fallback
-  return data.map(c => c.diagram_id).join(',');
+  return data.map(c => c.diagram_id);
 }
 
 /**
