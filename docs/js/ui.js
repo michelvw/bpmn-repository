@@ -349,47 +349,59 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
   } else {
     currentTags.forEach(t => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'd-flex align-items-center justify-content-between mb-1';
+      wrapper.className = 'd-flex align-items-center justify-content-between mb-1 position-relative';
+
+      const colorList = TAG_COLORS.map(c => `
+        <div class="color-pick-option d-flex align-items-center gap-2 px-2 py-1" 
+            data-color="${c.value}"
+            data-tag-id="${t.tagId}"
+            style="cursor:pointer; border-radius:4px;">
+          <span style="width:14px; height:14px; border-radius:50%; background:${c.value}; 
+                      display:inline-block; flex-shrink:0;
+                      border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}"></span>
+          <span>${c.name}</span>
+          ${c.value === t.color ? '<i class="bi bi-check ms-auto"></i>' : ''}
+        </div>
+      `).join('');
 
       wrapper.innerHTML = `
-        <div class="dropdown">
-          <span class="badge dropdown-toggle" 
-                style="background-color: ${t.color}; cursor:pointer" 
-                data-bs-toggle="dropdown"
-                data-bs-auto-close="true">
-            ${t.name}
-          </span>
-          <ul class="dropdown-menu p-2" style="min-width: 120px;">
-            <li><small class="text-muted px-2">Change colour</small></li>
-            ${TAG_COLORS.map(c => `
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 color-option py-1" 
-                data-color="${c.value}"
-                data-tag-id="${t.tagId}"
-                href="#"
-                onclick="return false;">
-                <span style="width:14px; height:14px; border-radius:50%; background:${c.value}; display:inline-block; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}"></span>
-                ${c.name}
-                ${c.value === t.color ? '<i class="bi bi-check ms-auto"></i>' : ''}
-              </a>
-            </li>
-          `).join('')}
-          </ul>
+        <span class="badge color-badge-toggle" 
+              style="background-color: ${t.color}; cursor:pointer">
+          ${t.name} <i class="bi bi-chevron-down" style="font-size:0.65rem"></i>
+        </span>
+        <div class="color-pick-panel d-none bg-white border rounded shadow-sm py-1"
+            style="position:absolute; left:0; top:100%; z-index:9999; min-width:130px;">
+          <small class="text-muted px-2">Change colour</small>
+          ${colorList}
         </div>
         <button class="btn btn-sm btn-link text-danger p-0 ms-2 remove-tag">
           <i class="bi bi-x-lg"></i>
         </button>
       `;
 
-      wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
-      wrapper.querySelectorAll('.color-option').forEach(option => {
+      // Toggle colour panel on badge click
+      const badge = wrapper.querySelector('.color-badge-toggle');
+      const panel = wrapper.querySelector('.color-pick-panel');
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.classList.toggle('d-none');
+      });
+
+      // Colour pick
+      wrapper.querySelectorAll('.color-pick-option').forEach(option => {
+        option.addEventListener('mouseenter', () => option.style.backgroundColor = '#f0f0f0');
+        option.addEventListener('mouseleave', () => option.style.backgroundColor = '');
         option.addEventListener('click', (e) => {
-          e.preventDefault();
           e.stopPropagation();
+          panel.classList.add('d-none');
           onColorChange(t.tagId, option.dataset.color);
         });
       });
 
+      // Close panel when clicking elsewhere inside the parent dropdown
+      document.addEventListener('click', () => panel.classList.add('d-none'), { once: false });
+
+      wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
       currentTagsEl.appendChild(wrapper);
     });
   }
