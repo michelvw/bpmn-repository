@@ -313,6 +313,40 @@ document.getElementById('btnLoginAnonymous').onclick = () => {
   ui.showAuth();
 };
 
+// Forgot password link
+document.getElementById('btnForgotPassword').onclick = withErrorHandling(async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value.trim();
+  if (!email) return ui.showToast('Enter your email address first.', 'warning');
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+
+  if (error) return ui.showToast(error.message, 'danger');
+  ui.showToast('Password reset email sent — check your inbox.', 'info');
+});
+
+// Handle password reset redirect on page load
+document.getElementById('btnConfirmResetPassword').onclick = withErrorHandling(async () => {
+  const newPassword = document.getElementById('newPasswordInput').value;
+  const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+  if (!newPassword) return ui.showToast('Please enter a new password.', 'warning');
+  if (newPassword !== confirmPassword) return ui.showToast('Passwords do not match.', 'warning');
+  if (newPassword.length < 6) return ui.showToast('Password must be at least 6 characters.', 'warning');
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return ui.showToast(error.message, 'danger');
+
+  ui.showToast('Password updated successfully.', 'success');
+  const modal = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+  if (modal) modal.hide();
+
+  // Clear the hash from the URL
+  window.history.replaceState({}, '', window.location.pathname);
+});
+
 /* ===============================
    PROFILE MODAL
 ================================= */
@@ -337,6 +371,15 @@ document.getElementById('btnSaveProfile').onclick = async () => {
    STARTUP
 ================================= */
 window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
+  // Check for password reset token in URL hash
+  const hash = new URLSearchParams(window.location.hash.replace('#', '?'));
+  if (hash.get('type') === 'recovery') {
+    ui.showAuth();
+    const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    resetModal.show();
+    return;
+  }
+
   const sharedId = getSharedDiagramId();
   const { data: sessionData } = await supabase.auth.getSession();
 
