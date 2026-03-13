@@ -7,6 +7,7 @@ import { supabase } from './supabase.js';
 
 let currentUser = null;
 let currentDiagramId = null;
+let cachedUsers = null;
 
 //manage unsaved changes
 let isDirty = false;
@@ -195,14 +196,17 @@ async function handleSignup(email, password) {
 async function openShareModal() {
   if (!currentDiagramId) return ui.showToast('Save the diagram first before sharing.', 'warning');
 
-  const [isPublic, collaborators, users] = await Promise.all([
+  // Fetch users once per session
+  if (!cachedUsers) {
+    cachedUsers = await userService.getUsers();
+  }
+
+  const [isPublic, collaborators] = await Promise.all([
     service.getPublicAccess(currentDiagramId),
-    service.getCollaborators(currentDiagramId),
-    userService.getUsers()
+    service.getCollaborators(currentDiagramId)
   ]);
 
-  // Filter out the current user from the list
-  const filteredUsers = users.filter(u => u.id !== currentUser.id);
+  const filteredUsers = cachedUsers.filter(u => u.id !== currentUser.id);
 
   ui.showShareModal(
     generateShareLink(currentDiagramId),
