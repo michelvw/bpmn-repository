@@ -524,8 +524,8 @@ document.getElementById('btnSaveProfile').onclick = async () => {
 window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   const hash = new URLSearchParams(window.location.hash.replace('#', '?'));
 
-  document.getElementById('btnTagsDropdown').closest('.dropdown').addEventListener('hide.bs.dropdown', (e) => {
-  if (e.clickEvent?.target?.closest('.color-option')) {
+  document.getElementById('btnTagsDropdown').closest('.btn-group').addEventListener('hide.bs.dropdown', (e) => {
+    if (e.clickEvent?.target?.closest('.color-option')) {
       e.preventDefault();
     }
   });
