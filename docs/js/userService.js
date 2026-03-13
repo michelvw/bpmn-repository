@@ -33,3 +33,30 @@ export async function getUsers() {
   if (error) throw error;
   return data;
 }
+
+export async function getIsAdmin() {
+  const id = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data.is_admin;
+}
+
+export async function getAllUsers() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, username, is_admin')
+    .order('username', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteUser(userId) {
+  const { error } = await supabase.rpc('delete_user', { p_user_id: userId });
+  if (error) throw error;
+}

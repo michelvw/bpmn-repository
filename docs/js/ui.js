@@ -17,10 +17,52 @@ export function showAuth() {
   document.getElementById('editorPage').classList.add('d-none');
 }
 
+export function showAdmin() {
+  document.getElementById('authPage').classList.add('d-none');
+  document.getElementById('overviewPage').classList.add('d-none');
+  document.getElementById('editorPage').classList.add('d-none');
+  document.getElementById('adminPage').classList.remove('d-none');
+}
+
 export function showOverview() {
   document.getElementById('authPage').classList.add('d-none');
   document.getElementById('editorPage').classList.add('d-none');
+  document.getElementById('adminPage').classList.add('d-none');
   document.getElementById('overviewPage').classList.remove('d-none');
+}
+
+export function renderAdminUserTable(users, currentUserId, onDelete) {
+  const tbody = document.getElementById('adminUserTable');
+  tbody.innerHTML = '';
+
+  users.forEach(u => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${u.username || '-'}</td>
+      <td>${u.is_admin ? '<span class="badge bg-danger">Admin</span>' : '<span class="badge bg-secondary">User</span>'}</td>
+      <td>
+        ${u.id !== currentUserId && !u.is_admin ? `
+          <button class="btn btn-sm btn-outline-danger delete-user-btn">
+            <i class="bi bi-trash me-1"></i>Delete
+          </button>
+        ` : '-'}
+      </td>
+    `;
+
+    if (u.id !== currentUserId && !u.is_admin) {
+      row.querySelector('.delete-user-btn').onclick = () => {
+        showConfirmModal(
+          'Delete User',
+          `This will permanently delete "${u.username}" and all their diagrams. Are you sure?`,
+          () => onDelete(u.id),
+          'Delete',
+          'btn-danger'
+        );
+      };
+    }
+
+    tbody.appendChild(row);
+  });
 }
 
 export function showAnonymousEditor() {

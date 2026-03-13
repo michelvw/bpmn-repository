@@ -8,6 +8,7 @@ import { supabase } from './supabase.js';
 let currentUser = null;
 let currentDiagramId = null;
 let cachedUsers = null;
+let isAdmin = false;
 
 //manage unsaved changes
 let isDirty = false;
@@ -211,6 +212,23 @@ async function handleSignup(email, password, confirmPassword) {
 }
 
 /* ===============================
+   OPEN ADMIN PAGE
+================================= */
+async function openAdminPage() {
+  const users = await userService.getAllUsers();
+  ui.renderAdminUserTable(
+    users,
+    currentUser.id,
+    withErrorHandling(async (userId) => {
+      await userService.deleteUser(userId);
+      ui.showToast('User deleted.', 'success');
+      await openAdminPage();
+    })
+  );
+  ui.showAdmin();
+}
+
+/* ===============================
    OPEN SHARE MODAL
 ================================= */
 async function openShareModal() {
@@ -325,9 +343,10 @@ document.getElementById('btnLogin').onclick = withErrorHandling(() =>
   handleLogin(document.getElementById('emailInput').value, document.getElementById('passwordInput').value));
 
 document.getElementById('btnLogout').onclick = () => confirmIfDirty(withErrorHandling(async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) return ui.showToast(error.message, 'danger');
+  await supabase.auth.signOut();
   currentUser = null;
+  isAdmin = false;
+  document.getElementById('btnAdmin').classList.add('d-none');
   ui.showAuth();
 }));
 
@@ -381,6 +400,9 @@ document.getElementById('btnConfirmResetPassword').onclick = withErrorHandling(a
   window.history.replaceState({}, '', window.location.pathname);
 });
 
+document.getElementById('btnAdmin').onclick = withErrorHandling(openAdminPage);
+document.getElementById('btnAdminBack').onclick = withErrorHandling(loadOverview);
+
 /* ===============================
    PROFILE MODAL
 ================================= */
@@ -415,7 +437,6 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   }
 
   if (hash.get('type') === 'signup') {
-    // Clear the hash and show login page with a success message
     window.history.replaceState({}, '', window.location.pathname);
     ui.showAuth();
     ui.showToast('Email confirmed! You can now log in.', 'success');
@@ -438,6 +459,9 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
 
   if (sessionData.session) {
     currentUser = sessionData.session.user;
+    isAdmin = await userService.getIsAdmin();
+    if (isAdmin) document.getElementById('btnAdmin').classList.remove('d-none');
+
     if (sharedId) {
       const [versionData, detailData] = await Promise.all([
         service.loadLatestVersion(sharedId),
@@ -447,7 +471,9 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
       await loadXML(versionData.bpmn_xml, true);
       ui.renderDiagramDetails(detailData);
       ui.showEditor();
-  }
+    } else {
+      await loadOverview(); // ← this was missing
+    }
   } else {
     ui.showAuth();
   }
