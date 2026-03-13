@@ -294,6 +294,12 @@ document.getElementById('btnRename').onclick = withErrorHandling(() => {
   });
 });
 
+document.getElementById('btnLoginAnonymous').onclick = () => {
+  // Clear the shared diagram from URL so after login they go to overview
+  window.history.replaceState({}, '', window.location.pathname);
+  ui.showAuth();
+};
+
 /* ===============================
    PROFILE MODAL
 ================================= */
@@ -322,8 +328,12 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   const { data: sessionData } = await supabase.auth.getSession();
 
   if (sharedId && !sessionData.session) {
-    const versionData = await service.loadLatestVersion(sharedId);
+    const [versionData, detailData] = await Promise.all([
+      service.loadLatestVersion(sharedId),
+      service.getDiagramDetails(sharedId)
+    ]);
     await loadXML(versionData.bpmn_xml, true);
+    ui.renderDiagramDetails(detailData);
     ui.showAnonymousEditor();
     return;
   }

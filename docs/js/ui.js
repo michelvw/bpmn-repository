@@ -28,7 +28,7 @@ export function showAnonymousEditor() {
   document.getElementById('overviewPage').classList.add('d-none');
   document.getElementById('editorPage').classList.remove('d-none');
 
-  // Hide everything except download
+  // Hide authenticated toolbar elements
   document.getElementById('btnSave').classList.add('d-none');
   document.getElementById('btnBack').classList.add('d-none');
   document.getElementById('btnShare').classList.add('d-none');
@@ -36,7 +36,10 @@ export function showAnonymousEditor() {
   document.getElementById('btnDelete').classList.add('d-none');
   document.getElementById('btnHistory').classList.add('d-none');
   document.getElementById('btnRename').classList.add('d-none');
-  document.getElementById('btnToggleDetails').classList.add('d-none');
+
+  // Show login button and keep details visible
+  document.getElementById('btnLoginAnonymous').classList.remove('d-none');
+  document.getElementById('btnToggleDetails').classList.remove('d-none');
 }
 
 export function showEditor() {
@@ -52,7 +55,9 @@ export function showEditor() {
   document.getElementById('btnDelete').classList.remove('d-none');
   document.getElementById('btnHistory').classList.remove('d-none');
   document.getElementById('btnRename').classList.remove('d-none');
-  document.getElementById('btnToggleDetails').classList.remove('d-none');
+
+  // Hide login button
+  document.getElementById('btnLoginAnonymous').classList.add('d-none');
 }
 
 /* ===============================
