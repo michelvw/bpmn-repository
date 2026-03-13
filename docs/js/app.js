@@ -353,12 +353,15 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
   if (sessionData.session) {
     currentUser = sessionData.session.user;
     if (sharedId) {
-      const versionData = await service.loadLatestVersion(sharedId);
+      const [versionData, detailData] = await Promise.all([
+        service.loadLatestVersion(sharedId),
+        service.getDiagramDetails(sharedId)
+      ]);
+      currentDiagramId = sharedId;
       await loadXML(versionData.bpmn_xml, true);
+      ui.renderDiagramDetails(detailData);
       ui.showEditor();
-    } else {
-      await loadOverview();
-    }
+  }
   } else {
     ui.showAuth();
   }
