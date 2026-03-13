@@ -231,16 +231,22 @@ export function renderVersionHistory(versions, handlers) {
   const container = document.getElementById('versionList');
   container.innerHTML = '';
 
+  const maxVersion = versions.length ? Math.max(...versions.map(v => v.version)) : null;
+
   versions.forEach(v => {
     const card = document.createElement('div');
     card.className = 'card mb-2';
 
     const createdAt = v.created_at ? new Date(v.created_at) : null;
     const dateStr = createdAt && !isNaN(createdAt) ? createdAt.toLocaleString() : '-';
+    const isLatest = v.version === maxVersion;
 
     card.innerHTML = `
       <div class="card-body">
-        <h6 class="card-title mb-1">Version ${v.version}</h6>
+        <h6 class="card-title mb-1">
+          Version ${v.version}
+          ${isLatest ? '<span class="badge bg-primary ms-2">Latest</span>' : ''}
+        </h6>
         <h6 class="card-subtitle text-muted mb-2">${dateStr}</h6>
         <p class="card-text mb-1">${v.comment || '-'}</p>
         <p class="card-text mb-2">
@@ -249,21 +255,32 @@ export function renderVersionHistory(versions, handlers) {
           </small>
         </p>
         <div class="d-flex gap-1">
-          <button class="btn btn-sm btn-outline-primary view-btn">
-            <i class="bi bi-eye me-1"></i>View
-          </button>
-          <button class="btn btn-sm btn-outline-success restore-btn">
-            <i class="bi bi-arrow-counterclockwise me-1"></i>Restore as Latest
-          </button>
+          ${isLatest ? `
+            <button class="btn btn-sm btn-primary edit-btn">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </button>
+          ` : `
+            <button class="btn btn-sm btn-outline-primary view-btn">
+              <i class="bi bi-eye me-1"></i>View
+            </button>
+            <button class="btn btn-sm btn-outline-success restore-btn">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Restore as Latest
+            </button>            
+          `}
         </div>
       </div>
     `;
 
-    card.querySelector('.view-btn').onclick = () => {
-      if(document.activeElement) document.activeElement.blur();
-      handlers.onView(v);
-    };
-    card.querySelector('.restore-btn').onclick = () => handlers.onRestore(v);
+    if (isLatest) {
+      card.querySelector('.edit-btn').onclick = () => handlers.onEdit(v);
+    } else {
+      card.querySelector('.view-btn').onclick = () => {
+        if (document.activeElement) document.activeElement.blur();
+        handlers.onView(v);
+      };
+      card.querySelector('.restore-btn').onclick = () => handlers.onRestore(v);
+      card.querySelector('.edit-latest-btn').onclick = () => handlers.onEditLatest();
+    }
 
     container.appendChild(card);
   });

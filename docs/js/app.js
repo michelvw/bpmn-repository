@@ -110,6 +110,14 @@ async function openHistoryModal(diagramId) {
   const history = await service.getVersionHistory(diagramId);
 
   ui.renderVersionHistory(history, {
+    onEdit: async (version) => {
+      const versionData = await service.getVersionById(version.id);
+      ui.closeVersionModal();
+      await loadXML(versionData.bpmn_xml, false);
+      ui.resetSaveButton(saveDiagram);
+      ui.showEditor();
+    },
+    
     onView: async (version) => {
       const versionData = await service.getVersionById(version.id);
       ui.closeVersionModal();
