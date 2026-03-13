@@ -25,15 +25,16 @@ export async function getDiagrams() {
   const collaboratorDiagramIds = await getCollaboratorDiagramIds(user.id);
 
   let query = supabase
-    .from('diagrams')
-    .select(`
-      id,
-      name,
-      updated_at,
-      owner_id,
-      diagram_versions(version, created_by)
-    `)
-    .order('updated_at', { ascending: false });
+  .from('diagrams')
+  .select(`
+    id,
+    name,
+    updated_at,
+    owner_id,
+    diagram_versions(version, created_by),
+    diagram_tags(id, tag_id, tags(name))
+  `)
+  .order('updated_at', { ascending: false });
 
   if (collaboratorDiagramIds.length > 0) {
     query = query.or(`owner_id.eq.${user.id},id.in.(${collaboratorDiagramIds.join(',')})`);
@@ -145,7 +146,8 @@ export async function getDiagramDetails(diagramId) {
       name,
       updated_at,
       owner:owner_id(username),
-      diagram_versions(version, comment, created_by)
+      diagram_versions(version, comment, created_by),
+      diagram_tags(id, tag_id, tags(name))
     `)
     .eq('id', diagramId)
     .single();
@@ -312,6 +314,83 @@ export async function removeCollaborator(collaboratorId) {
     .from('diagram_collaborators')
     .delete()
     .eq('id', collaboratorId);
+
+  if (error) throw error;
+}
+
+/**
+ * Get all tags
+ */
+export async function getTags() {
+  const { data, error } = await supabase
+    .from('tags')
+    .select('id, name')
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get tags for a diagram
+ */
+export async function getDiagramTags(diagramId) {
+  const { data, error } = await supabase
+    .from('diagram_tags')
+    .select('id, tag_id, tags(id, name)')
+    .eq('diagram_id', diagramId);
+
+  if (error) throw error;
+  return data.map(dt => ({ id: dt.id, tagId: dt.tag_id, name: dt.tags.name }));
+}
+
+/**
+ * Add tag to diagram — creates tag if it doesn't exist
+ */
+export async function addTagToDiagram(diagramId, tagName) {
+  const user = await getCurrentUser();
+  const normalizedName = tagName.trim().toLowerCase();
+  if (!normalizedName) throw new Error('Tag name cannot be empty');
+
+  // Get or create tag
+  let tag;
+  const { data: existing } = await supabase
+    .from('tags')
+    .select('id')
+    .eq('name', normalizedName)
+    .single();
+
+  if (existing) {
+    tag = existing;
+  } else {
+    const { data: created, error: createError } = await supabase
+      .from('tags')
+      .insert({ name: normalizedName, created_by: user.id })
+      .select('id')
+      .single();
+    if (createError) throw createError;
+    tag = created;
+  }
+
+  // Link tag to diagram
+  const { error } = await supabase
+    .from('diagram_tags')
+    .insert({ diagram_id: diagramId, tag_id: tag.id });
+
+  if (error) {
+    if (error.code === '23505') throw new Error('Tag already added to this diagram');
+    throw error;
+  }
+}
+
+/**
+ * Remove tag from diagram
+ */
+export async function removeTagFromDiagram(diagramTagId) {
+  const { error } = await supabase
+    .from('diagram_tags')
+    .delete()
+    .eq('id', diagramTagId);
 
   if (error) throw error;
 }

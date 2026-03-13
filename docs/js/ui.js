@@ -1,3 +1,6 @@
+let currentView = 'tiles'; // 'tiles' or 'table'
+let activeTagFilter = null;
+
 /* ===============================
    UI MODULE
 ================================= */
@@ -131,6 +134,11 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
       const latestVersion = latestVersionObj ? latestVersionObj.version : '-';
       const latestCreatedBy = latestVersionObj?.created_by_user?.username || '-';
       const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
+     
+      const tags = d.diagram_tags || [];
+      const tagsHtml = tags.length
+        ? tags.map(t => `<span class="badge bg-primary me-1">${t.tags.name}</span>`).join('')
+        : '';
 
       const col = document.createElement('div');
       col.className = 'col';
@@ -150,6 +158,7 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
             <small class="text-muted d-block">
               <i class="bi bi-layers me-1"></i>Version ${latestVersion} by ${latestCreatedBy}
             </small>
+            <div class="mt-1">${tagsHtml}</div>
           </div>
           <div class="card-footer bg-white border-top-0 d-flex gap-1 pt-0">
             <button class="btn btn-sm btn-outline-secondary open-btn flex-grow-1">
@@ -277,6 +286,170 @@ function setupSearch() {
       noResults?.remove();
     }
   });
+}
+
+export function renderTagFilterBar(tags, onFilter) {
+  const bar = document.getElementById('tagFilterBar');
+  // Keep the label, remove old tag buttons
+  bar.innerHTML = '<small class="text-muted me-1"><i class="bi bi-tag me-1"></i>Filter:</small>';
+
+  if (tags.length === 0) {
+    bar.innerHTML += '<small class="text-muted">No tags yet.</small>';
+    return;
+  }
+
+  // All button
+  const allBtn = document.createElement('button');
+  allBtn.className = `btn btn-sm ${activeTagFilter === null ? 'btn-secondary' : 'btn-outline-secondary'}`;
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => { activeTagFilter = null; onFilter(null); renderTagFilterBar(tags, onFilter); };
+  bar.appendChild(allBtn);
+
+  tags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = `btn btn-sm ${activeTagFilter === tag.id ? 'btn-primary' : 'btn-outline-primary'}`;
+    btn.textContent = tag.name;
+    btn.onclick = () => {
+      activeTagFilter = activeTagFilter === tag.id ? null : tag.id;
+      onFilter(activeTagFilter);
+      renderTagFilterBar(tags, onFilter);
+    };
+    bar.appendChild(btn);
+  });
+}
+
+export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove) {
+  const currentTagsEl = document.getElementById('currentTags');
+  const suggestionsEl = document.getElementById('tagSuggestions');
+  const tagInput = document.getElementById('tagInput');
+
+  // Render current tags as removable badges
+  currentTagsEl.innerHTML = '';
+  if (currentTags.length === 0) {
+    currentTagsEl.innerHTML = '<small class="text-muted">No tags yet.</small>';
+  } else {
+    currentTags.forEach(t => {
+      const badge = document.createElement('span');
+      badge.className = 'badge bg-primary d-flex align-items-center gap-1';
+      badge.innerHTML = `${t.name} <i class="bi bi-x" style="cursor:pointer"></i>`;
+      badge.querySelector('i').onclick = () => onRemove(t.id);
+      currentTagsEl.appendChild(badge);
+    });
+  }
+
+  // Render suggestions — existing tags not yet on this diagram
+  const currentTagIds = currentTags.map(t => t.tagId);
+  const suggestions = allTags.filter(t => !currentTagIds.includes(t.id));
+  suggestionsEl.innerHTML = '';
+
+  if (suggestions.length > 0) {
+    suggestions.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm btn-outline-secondary me-1 mb-1';
+      btn.textContent = t.name;
+      btn.onclick = () => { onAdd(t.name); };
+      suggestionsEl.appendChild(btn);
+    });
+  }
+
+  // Wire up add button and enter key
+  const addBtn = document.getElementById('btnAddTag');
+  const newAddBtn = addBtn.cloneNode(true);
+  addBtn.replaceWith(newAddBtn);
+
+  const handleAdd = () => {
+    const value = tagInput.value.trim();
+    if (!value) return;
+    onAdd(value);
+    tagInput.value = '';
+  };
+
+  newAddBtn.addEventListener('click', handleAdd);
+  tagInput.onkeydown = (e) => { if (e.key === 'Enter') handleAdd(); };
+}
+
+export function setViewMode(mode) {
+  currentView = mode;
+  const grid = document.getElementById('diagramGrid');
+  const table = document.getElementById('diagramTable');
+  const btnTiles = document.getElementById('btnViewTiles');
+  const btnTable = document.getElementById('btnViewTable');
+
+  if (mode === 'tiles') {
+    grid.classList.remove('d-none');
+    table.classList.add('d-none');
+    btnTiles.classList.add('active');
+    btnTable.classList.remove('active');
+  } else {
+    grid.classList.add('d-none');
+    table.classList.remove('d-none');
+    btnTiles.classList.remove('active');
+    btnTable.classList.add('active');
+  }
+}
+
+export function renderTable(diagrams, currentUserId, onOpen, onDelete, onHistory) {
+  const tbody = document.querySelector('#diagramTable tbody');
+  tbody.innerHTML = '';
+
+  const owned = diagrams.filter(d => d.owner_id === currentUserId);
+  const collaborated = diagrams.filter(d => d.owner_id !== currentUserId);
+
+  const renderRows = (list, isCollaborated) => {
+    list.forEach(d => {
+      const versions = d.diagram_versions || [];
+      const latestVersion = versions.length ? Math.max(...versions.map(v => v.version)) : '-';
+      const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
+      const tags = d.diagram_tags || [];
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>
+          ${d.name}
+          ${isCollaborated ? '<span class="badge bg-secondary ms-1"><i class="bi bi-people"></i> Shared</span>' : ''}
+        </td>
+        <td>${tags.map(t => `<span class="badge bg-primary me-1">${t.tags.name}</span>`).join('') || '-'}</td>
+        <td>${dateStr}</td>
+        <td>${latestVersion}</td>
+        <td class="d-flex gap-1">
+          <button class="btn btn-sm btn-outline-secondary open-btn">
+            <i class="bi bi-folder2-open me-1"></i>Open
+          </button>
+          <button class="btn btn-sm btn-outline-secondary history-btn">
+            <i class="bi bi-clock-history"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger delete-btn">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      `;
+
+      row.querySelector('.open-btn').onclick = () => onOpen(d.id);
+      row.querySelector('.history-btn').onclick = () => onHistory(d.id);
+      row.querySelector('.delete-btn').onclick = () => {
+        showConfirmModal(
+          'Delete Diagram',
+          'This will delete the diagram and all version history. Are you sure?',
+          () => onDelete(d.id),
+          'Delete',
+          'btn-danger'
+        );
+      };
+
+      tbody.appendChild(row);
+    });
+  };
+
+  renderRows(owned, false);
+
+  if (collaborated.length > 0) {
+    if (owned.length > 0) {
+      const divider = document.createElement('tr');
+      divider.innerHTML = `<td colspan="5" class="text-muted pt-3"><h6><i class="bi bi-people me-2"></i>Shared with me</h6></td>`;
+      tbody.appendChild(divider);
+    }
+    renderRows(collaborated, true);
+  }
 }
 
 /* ===============================

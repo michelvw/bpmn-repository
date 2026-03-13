@@ -9,6 +9,7 @@ let currentUser = null;
 let currentDiagramId = null;
 let cachedUsers = null;
 let isAdmin = false;
+let allDiagramsCache = null;
 
 //manage unsaved changes
 let isDirty = false;
@@ -42,10 +43,35 @@ function withErrorHandling(fn) {
    OVERVIEW
 ================================= */
 async function loadOverview() {
-  const data = await service.getDiagrams();
-  ui.renderGrid(
-    data,
-    currentUser.id,
+  const [data, tags] = await Promise.all([
+    service.getDiagrams(),
+    service.getTags()
+  ]);
+
+  allDiagramsCache = data;
+
+  ui.renderTagFilterBar(tags, (tagId) => {
+    const filtered = tagId
+      ? allDiagramsCache.filter(d =>
+          (d.diagram_tags || []).some(t => t.tag_id === tagId))
+      : allDiagramsCache;
+    ui.renderGrid(filtered, currentUser.id,
+      (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
+      withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
+      withErrorHandling(async (id) => { await openHistoryModal(id); }),
+      async (id) => {
+        const versionData = await service.loadLatestVersion(id);
+        return generatePreview(versionData.bpmn_xml);
+      }
+    );
+    ui.renderTable(filtered, currentUser.id,
+      (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
+      withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
+      withErrorHandling(async (id) => { await openHistoryModal(id); })
+    );
+  });
+
+  ui.renderGrid(data, currentUser.id,
     (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
     withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
     withErrorHandling(async (id) => { await openHistoryModal(id); }),
@@ -54,6 +80,13 @@ async function loadOverview() {
       return generatePreview(versionData.bpmn_xml);
     }
   );
+
+  ui.renderTable(data, currentUser.id,
+    (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
+    withErrorHandling(async (id) => { await service.deleteDiagram(id); await loadOverview(); }),
+    withErrorHandling(async (id) => { await openHistoryModal(id); })
+  );
+
   ui.resetSaveButton(saveDiagram);
   ui.showOverview();
 }
@@ -269,8 +302,55 @@ async function openShareModal() {
 }
 
 /* ===============================
+   OPEN TAGS DROPDOWN
+================================= */
+async function openTagsDropdown() {
+  if (!currentDiagramId) return ui.showToast('Save the diagram first before adding tags.', 'warning');
+
+  const [currentTags, allTags] = await Promise.all([
+    service.getDiagramTags(currentDiagramId),
+    service.getTags()
+  ]);
+
+  ui.renderTagsDropdown(
+    currentTags,
+    allTags,
+    withErrorHandling(async (tagName) => {
+      await service.addTagToDiagram(currentDiagramId, tagName);
+      const [updatedTags, updatedAllTags] = await Promise.all([
+        service.getDiagramTags(currentDiagramId),
+        service.getTags()
+      ]);
+      ui.renderTagsDropdown(updatedTags, updatedAllTags,
+        async (name) => {},
+        async (id) => {}
+      );
+      ui.showToast(`Tag added`, 'success');
+    }),
+    withErrorHandling(async (diagramTagId) => {
+      await service.removeTagFromDiagram(diagramTagId);
+      const [updatedTags, updatedAllTags] = await Promise.all([
+        service.getDiagramTags(currentDiagramId),
+        service.getTags()
+      ]);
+      ui.renderTagsDropdown(updatedTags, updatedAllTags,
+        async (name) => {},
+        async (id) => {}
+      );
+      ui.showToast('Tag removed', 'success');
+    })
+  );
+}
+
+document.getElementById('btnTagsDropdown').addEventListener('show.bs.dropdown', 
+  withErrorHandling(openTagsDropdown));
+
+/* ===============================
    EVENT BINDINGS
 ================================= */
+document.getElementById('btnViewTiles').onclick = () => ui.setViewMode('tiles');
+document.getElementById('btnViewTable').onclick = () => ui.setViewMode('table');
+
 document.getElementById('btnSave').onclick = withErrorHandling(saveDiagram);
 document.getElementById('btnBack').onclick = () => confirmIfDirty(withErrorHandling(loadOverview));
 document.getElementById('btnShare').onclick = withErrorHandling(openShareModal);
