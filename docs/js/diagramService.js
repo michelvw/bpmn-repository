@@ -32,7 +32,7 @@ export async function getDiagrams() {
     updated_at,
     owner_id,
     diagram_versions(version, created_by),
-    diagram_tags(id, tag_id, tags(name))
+    diagram_tags(id, tag_id, tags(name, color))
   `)
   .order('updated_at', { ascending: false });
 
