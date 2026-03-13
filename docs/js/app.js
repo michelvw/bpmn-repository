@@ -145,6 +145,7 @@ async function openHistoryModal(diagramId) {
         const details = await service.getDiagramDetails(currentDiagramId);
         ui.renderDiagramDetails(details);
         ui.resetSaveButton(saveDiagram);
+        markClean();
         ui.showToast(`Version ${version.version} restored as latest.`);
       });
     },
@@ -157,6 +158,7 @@ async function openHistoryModal(diagramId) {
       ui.renderDiagramDetails(details);
       ui.closeVersionModal();
       ui.resetSaveButton(saveDiagram);
+      markClean();
       await loadOverview();
     }
   });
