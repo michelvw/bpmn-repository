@@ -388,15 +388,17 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
       });
 
       // Colour pick
-      wrapper.querySelectorAll('.color-pick-option').forEach(option => {
-        option.addEventListener('mouseenter', () => option.style.backgroundColor = '#f0f0f0');
-        option.addEventListener('mouseleave', () => option.style.backgroundColor = '');
-        option.addEventListener('click', (e) => {
-          e.stopPropagation();
-          panel.classList.add('d-none');
-          onColorChange(t.tagId, option.dataset.color);
-        });
-      });
+      // Colour pick
+  wrapper.querySelectorAll('.color-pick-option').forEach(option => {
+    option.addEventListener('mouseenter', () => option.style.backgroundColor = '#f0f0f0');
+    option.addEventListener('mouseleave', () => option.style.backgroundColor = '');
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.classList.add('d-none');
+      console.log('color clicked', t.tagId, option.dataset.color);  // ← add this
+      onColorChange(t.tagId, option.dataset.color);
+    });
+  });
 
       // Close panel when clicking elsewhere inside the parent dropdown
       document.addEventListener('click', () => panel.classList.add('d-none'), { once: false });
