@@ -394,14 +394,17 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
     option.addEventListener('mouseleave', () => option.style.backgroundColor = '');
     option.addEventListener('click', (e) => {
       e.stopPropagation();
-      panel.classList.add('d-none');
-      console.log('color clicked', t.tagId, option.dataset.color);  // ← add this
+      setTimeout(() => panel.classList.add('d-none'), 0);
       onColorChange(t.tagId, option.dataset.color);
     });
   });
 
       // Close panel when clicking elsewhere inside the parent dropdown
-      document.addEventListener('click', () => panel.classList.add('d-none'), { once: false });
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+          panel.classList.add('d-none');
+        }
+      }, { once: false });
 
       wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
       currentTagsEl.appendChild(wrapper);
