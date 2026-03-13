@@ -23,6 +23,8 @@ function confirmIfDirty(onConfirm) {
   );
 }
 
+initModeler(markDirty);
+
 function withErrorHandling(fn) {
   return async (...args) => {
     try {
@@ -360,5 +362,3 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
     ui.showAuth();
   }
 }));
-
-initModeler(markDirty);
