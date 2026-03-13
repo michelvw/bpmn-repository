@@ -279,7 +279,6 @@ export function renderVersionHistory(versions, handlers) {
         handlers.onView(v);
       };
       card.querySelector('.restore-btn').onclick = () => handlers.onRestore(v);
-      card.querySelector('.edit-latest-btn').onclick = () => handlers.onEditLatest();
     }
 
     container.appendChild(card);
