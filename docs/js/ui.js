@@ -340,37 +340,50 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
   const suggestionsEl = document.getElementById('tagSuggestions');
   const tagInput = document.getElementById('tagInput');
 
-  // Selected colour state
   let selectedColor = TAG_COLORS[0].value;
 
-  // Render current tags as removable badges with colour change option
+  // Render current tags
   currentTagsEl.innerHTML = '';
   if (currentTags.length === 0) {
     currentTagsEl.innerHTML = '<small class="text-muted d-block mb-1">No tags yet.</small>';
   } else {
     currentTags.forEach(t => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'd-flex align-items-center gap-1 mb-1';
+      wrapper.className = 'd-flex align-items-center justify-content-between mb-1';
+
       wrapper.innerHTML = `
-        <span class="badge d-flex align-items-center gap-1" style="background-color: ${t.color}">
-          ${t.name}
-          <i class="bi bi-x remove-tag" style="cursor:pointer"></i>
-        </span>
-        <div class="d-flex gap-1 flex-wrap" style="max-width: 160px;">
-          ${TAG_COLORS.map(c => `
-            <div class="color-swatch ${c.value === t.color ? 'border border-dark' : ''}" 
-                 data-color="${c.value}"
-                 data-tag-id="${t.tagId}"
-                 title="${c.name}"
-                 style="width:16px; height:16px; border-radius:50%; background:${c.value}; cursor:pointer; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}">
-            </div>
-          `).join('')}
+        <div class="dropdown">
+          <span class="badge dropdown-toggle" 
+                style="background-color: ${t.color}; cursor:pointer" 
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="true">
+            ${t.name}
+          </span>
+          <ul class="dropdown-menu p-2" style="min-width: 120px;">
+            <li><small class="text-muted px-2">Change colour</small></li>
+            ${TAG_COLORS.map(c => `
+              <li>
+                <a class="dropdown-item d-flex align-items-center gap-2 color-option py-1" 
+                   data-color="${c.value}" href="#">
+                  <span style="width:14px; height:14px; border-radius:50%; background:${c.value}; display:inline-block; border: 2px solid ${c.value === t.color ? '#000' : 'transparent'}"></span>
+                  ${c.name}
+                  ${c.value === t.color ? '<i class="bi bi-check ms-auto"></i>' : ''}
+                </a>
+              </li>
+            `).join('')}
+          </ul>
         </div>
+        <button class="btn btn-sm btn-link text-danger p-0 ms-2 remove-tag">
+          <i class="bi bi-x-lg"></i>
+        </button>
       `;
 
       wrapper.querySelector('.remove-tag').onclick = () => onRemove(t.id);
-      wrapper.querySelectorAll('.color-swatch').forEach(swatch => {
-        swatch.onclick = () => onColorChange(swatch.dataset.tagId, swatch.dataset.color);
+      wrapper.querySelectorAll('.color-option').forEach(option => {
+        option.onclick = (e) => {
+          e.preventDefault();
+          onColorChange(t.tagId, option.dataset.color);
+        };
       });
 
       currentTagsEl.appendChild(wrapper);
@@ -378,36 +391,39 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
   }
 
   // Colour picker for new tags
-  const colorPickerHtml = `
-    <div class="d-flex gap-1 flex-wrap mb-1" id="newTagColorPicker">
-      ${TAG_COLORS.map(c => `
-        <div class="color-swatch-new ${c.value === selectedColor ? 'selected' : ''}"
-             data-color="${c.value}"
-             title="${c.name}"
-             style="width:16px; height:16px; border-radius:50%; background:${c.value}; cursor:pointer; border: 2px solid ${c.value === selectedColor ? '#000' : 'transparent'}">
-        </div>
-      `).join('')}
+  suggestionsEl.innerHTML = `
+    <div class="mb-2">
+      <small class="text-muted d-block mb-1">Colour for new tag:</small>
+      <div class="d-flex flex-wrap gap-1" id="newTagColorPicker">
+        ${TAG_COLORS.map(c => `
+          <div class="color-swatch-new"
+               data-color="${c.value}"
+               title="${c.name}"
+               style="width:18px; height:18px; border-radius:50%; background:${c.value}; cursor:pointer; border: 2px solid ${c.value === selectedColor ? '#000' : 'transparent'}">
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 
-  // Render suggestions
+  // Suggestions — existing tags not on this diagram
   const currentTagIds = currentTags.map(t => t.tagId);
   const suggestions = allTags.filter(t => !currentTagIds.includes(t.id));
-  suggestionsEl.innerHTML = colorPickerHtml;
 
   if (suggestions.length > 0) {
     const suggestionsWrapper = document.createElement('div');
-    suggestionsWrapper.className = 'd-flex flex-wrap gap-1 mb-1';
+    suggestionsWrapper.innerHTML = '<small class="text-muted d-block mb-1">Existing tags:</small>';
+    const btnWrapper = document.createElement('div');
+    btnWrapper.className = 'd-flex flex-wrap gap-1 mb-1';
     suggestions.forEach(t => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-sm';
-      btn.style.backgroundColor = t.color;
-      btn.style.color = '#fff';
-      btn.style.border = 'none';
+      btn.style.cssText = `background-color: ${t.color}; color: #fff; border: none;`;
       btn.textContent = t.name;
       btn.onclick = () => onAdd(t.name, t.color);
-      suggestionsWrapper.appendChild(btn);
+      btnWrapper.appendChild(btn);
     });
+    suggestionsWrapper.appendChild(btnWrapper);
     suggestionsEl.appendChild(suggestionsWrapper);
   }
 
@@ -436,7 +452,6 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
   newAddBtn.addEventListener('click', handleAdd);
   tagInput.onkeydown = (e) => { if (e.key === 'Enter') handleAdd(); };
 }
-
 export function setViewMode(mode) {
   currentView = mode;
   const grid = document.getElementById('diagramGrid');
