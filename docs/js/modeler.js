@@ -27,10 +27,6 @@ export async function loadXML(xml, readOnly = false) {
   await modeler.importXML(xml);
 }
 
-export function setReadOnly(state) {
-  // No-op — kept for backwards compatibility
-}
-
 export async function getXML() {
   return (await modeler.saveXML({ format: true })).xml;
 }
