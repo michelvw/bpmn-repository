@@ -80,7 +80,7 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
   const owned = diagrams.filter(d => d.owner_id === currentUserId);
   const collaborated = diagrams.filter(d => d.owner_id !== currentUserId);
 
-  const renderTiles = (list, isCollaborated) => {
+  const renderTiles = (list, isCollaborated, container) => {
     list.forEach(d => {
       const versions = d.diagram_versions || [];
       const latestVersionObj = versions.length
@@ -138,25 +138,30 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
 
       col.querySelector('.diagram-tile').onclick = () => onOpen(d.id);
       grid.appendChild(col);
+      container.appendChild(col);
     });
   };
 
   // Render owned diagrams
   if (owned.length > 0) {
-    renderTiles(owned, false);
+    const ownedRow = document.createElement('div');
+    ownedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
+    grid.appendChild(ownedRow);
+    renderTiles(owned, false, ownedRow);
   }
 
   // Divider + collaborated section
   if (collaborated.length > 0) {
     if (owned.length > 0) {
       grid.insertAdjacentHTML('beforeend', `
-        <div class="col-12">
-          <h6 class="text-muted mt-3"><i class="bi bi-people me-2"></i>Shared with me</h6>
-          <hr class="mt-1 mb-3">
-        </div>
+        <h6 class="text-muted mt-4"><i class="bi bi-people me-2"></i>Shared with me</h6>
+        <hr class="mt-1 mb-3">
       `);
     }
-    renderTiles(collaborated, true);
+    const collaboratedRow = document.createElement('div');
+    collaboratedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
+    grid.appendChild(collaboratedRow);
+    renderTiles(collaborated, true, collaboratedRow);
   }
 
   setupLazyPreviews(onPreview);
