@@ -307,11 +307,6 @@ async function openShareModal() {
 async function openTagsDropdown() {
   if (!currentDiagramId) return ui.showToast('Save the diagram first before adding tags.', 'warning');
 
-  const [currentTags, allTags] = await Promise.all([
-    service.getDiagramTags(currentDiagramId),
-    service.getTags()
-  ]);
-
   const refreshDropdown = async () => {
     const [updatedTags, updatedAllTags] = await Promise.all([
       service.getDiagramTags(currentDiagramId),
@@ -320,10 +315,9 @@ async function openTagsDropdown() {
     ui.renderTagsDropdown(
       updatedTags,
       updatedAllTags,
-      withErrorHandling(async (tagId, color) => {
-        console.log('updating color', tagId, color);
-        await service.updateTagColor(tagId, color);
-        console.log('color updated');
+      withErrorHandling(async (tagName, color) => {
+        await service.addTagToDiagram(currentDiagramId, tagName, color);
+        ui.showToast('Tag added', 'success');
         await refreshDropdown();
       }),
       withErrorHandling(async (diagramTagId) => {
@@ -337,6 +331,11 @@ async function openTagsDropdown() {
       })
     );
   };
+
+  const [currentTags, allTags] = await Promise.all([
+    service.getDiagramTags(currentDiagramId),
+    service.getTags()
+  ]);
 
   ui.renderTagsDropdown(
     currentTags,
