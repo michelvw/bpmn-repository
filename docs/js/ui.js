@@ -14,6 +14,9 @@ const TAG_COLORS = [
   { name: 'Gray',   value: '#6c757d' },
 ];
 
+let sortColumn = 'updated_at';
+let sortDirection = 'desc';
+
 /* ===============================
    UI MODULE
 ================================= */
@@ -479,10 +482,11 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
   newAddBtn.addEventListener('click', handleAdd);
   tagInput.onkeydown = (e) => { if (e.key === 'Enter') handleAdd(); };
 }
+
 export function setViewMode(mode) {
   currentView = mode;
   const grid = document.getElementById('diagramGrid');
-  const table = document.getElementById('diagramTable');
+  const table = document.getElementById('diagramTableView');
   const btnTiles = document.getElementById('btnViewTiles');
   const btnTable = document.getElementById('btnViewTable');
 
@@ -500,67 +504,194 @@ export function setViewMode(mode) {
 }
 
 export function renderTable(diagrams, currentUserId, onOpen, onDelete, onHistory) {
-  const tbody = document.querySelector('#diagramTable tbody');
-  tbody.innerHTML = '';
-
   const owned = diagrams.filter(d => d.owner_id === currentUserId);
   const collaborated = diagrams.filter(d => d.owner_id !== currentUserId);
 
-  const renderRows = (list, isCollaborated) => {
-    list.forEach(d => {
-      const versions = d.diagram_versions || [];
-      const latestVersion = versions.length ? Math.max(...versions.map(v => v.version)) : '-';
-      const dateStr = d.updated_at ? new Date(d.updated_at).toLocaleString() : '-';
-      const tags = d.diagram_tags || [];
+  // Show/hide shared section
+  const sharedSection = document.getElementById('sharedTableSection');
+  sharedSection.classList.toggle('d-none', collaborated.length === 0);
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>
-          ${d.name}
-          ${isCollaborated ? '<span class="badge bg-secondary ms-1"><i class="bi bi-people"></i> Shared</span>' : ''}
-        </td>
-        <td>${tags.map(t => `<span class="badge me-1" style="background-color: ${t.tags.color}">${t.tags.name}</span>`).join('') || '-'}</td>
-        <td>${dateStr}</td>
-        <td>${latestVersion}</td>
-        <td class="d-flex gap-1">
-          <button class="btn btn-sm btn-outline-secondary open-btn">
-            <i class="bi bi-folder2-open me-1"></i>Open
+  renderSingleTable(
+    'myDiagramsTableHead',
+    'myDiagramsTableBody',
+    'myDiagramsEmpty',
+    owned,
+    false,
+    onOpen, onDelete, onHistory
+  );
+
+  renderSingleTable(
+    'sharedDiagramsTableHead',
+    'sharedDiagramsTableBody',
+    null,
+    collaborated,
+    true,
+    onOpen, onDelete, onHistory
+  );
+}
+
+function renderSingleTable(headId, bodyId, emptyId, diagrams, isShared, onOpen, onDelete, onHistory) {
+  const thead = document.getElementById(headId);
+  const tbody = document.getElementById(bodyId);
+
+  // Columns definition
+  const columns = [
+    { key: 'name',        label: 'Name',         sortable: true  },
+    { key: 'tags',        label: 'Tags',          sortable: false },
+    ...(isShared ? [{ key: 'owner', label: 'Owner', sortable: false }] : []),
+    { key: 'updated_at',  label: 'Last Modified', sortable: true  },
+    { key: 'created_at',  label: 'Created',       sortable: true  },
+    { key: 'last_by',     label: 'Last Updated By', sortable: false },
+    { key: 'version',     label: 'Version',       sortable: true  },
+    { key: 'actions',     label: '',              sortable: false },
+  ];
+
+  // Render header
+  thead.innerHTML = '';
+  const tr = document.createElement('tr');
+  tr.className = 'table-light border-bottom';
+
+  columns.forEach(col => {
+    const th = document.createElement('th');
+    th.className = 'fw-semibold text-muted small px-3 py-2';
+    th.style.whiteSpace = 'nowrap';
+
+    if (col.sortable) {
+      th.style.cursor = 'pointer';
+      th.style.userSelect = 'none';
+      const isActive = sortColumn === col.key;
+      const icon = isActive
+        ? (sortDirection === 'asc' ? 'bi-sort-up' : 'bi-sort-down')
+        : 'bi-arrow-down-up';
+      th.innerHTML = `${col.label} <i class="bi ${icon} ms-1 ${isActive ? 'text-primary' : 'text-muted opacity-50'}"></i>`;
+      th.onclick = () => {
+        if (sortColumn === col.key) {
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          sortColumn = col.key;
+          sortDirection = 'asc';
+        }
+        renderSingleTable(headId, bodyId, emptyId, diagrams, isShared, onOpen, onDelete, onHistory);
+      };
+    } else {
+      th.textContent = col.label;
+    }
+
+    tr.appendChild(th);
+  });
+  thead.appendChild(tr);
+
+  // Sort diagrams
+  const sorted = [...diagrams].sort((a, b) => {
+    let valA, valB;
+    switch (sortColumn) {
+      case 'name':
+        valA = (a.name || '').toLowerCase();
+        valB = (b.name || '').toLowerCase();
+        break;
+      case 'updated_at':
+        valA = new Date(a.updated_at || 0);
+        valB = new Date(b.updated_at || 0);
+        break;
+      case 'created_at': {
+        const versions = v => v.diagram_versions || [];
+        valA = new Date(Math.min(...versions(a).map(v => new Date(v.created_at || 0))));
+        valB = new Date(Math.min(...versions(b).map(v => new Date(v.created_at || 0))));
+        break;
+      }
+      case 'version': {
+        const maxV = d => Math.max(0, ...(d.diagram_versions || []).map(v => v.version));
+        valA = maxV(a);
+        valB = maxV(b);
+        break;
+      }
+      default:
+        return 0;
+    }
+    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Show empty state
+  if (emptyId) {
+    document.getElementById(emptyId).classList.toggle('d-none', diagrams.length > 0);
+  }
+
+  // Render rows
+  tbody.innerHTML = '';
+
+  if (diagrams.length === 0) return;
+
+  sorted.forEach((d, i) => {
+    const versions = d.diagram_versions || [];
+    const latestVersionObj = versions.length
+      ? versions.reduce((a, b) => (a.version > b.version ? a : b))
+      : null;
+    const latestVersion = latestVersionObj?.version ?? '-';
+    const lastUpdatedBy = latestVersionObj?.created_by_user?.username || '-';
+
+    const firstVersionObj = versions.length
+      ? versions.reduce((a, b) => (a.version < b.version ? a : b))
+      : null;
+    const createdAt = firstVersionObj?.created_at
+      ? new Date(firstVersionObj.created_at).toLocaleString()
+      : '-';
+
+    const updatedAt = d.updated_at
+      ? new Date(d.updated_at).toLocaleString()
+      : '-';
+
+    const tags = d.diagram_tags || [];
+    const tagsHtml = tags.length
+      ? tags.map(t => `<span class="badge rounded-pill me-1" style="background-color:${t.tags.color}; font-size:0.7rem">${t.tags.name}</span>`).join('')
+      : '<span class="text-muted small">—</span>';
+
+    const owner = d.owner?.username || '-';
+
+    const row = document.createElement('tr');
+    row.className = i % 2 === 0 ? '' : 'table-light';
+    row.style.cursor = 'pointer';
+
+    row.innerHTML = `
+      <td class="px-3 py-2 fw-medium">${d.name}</td>
+      <td class="px-3 py-2">${tagsHtml}</td>
+      ${isShared ? `<td class="px-3 py-2 small text-muted">${owner}</td>` : ''}
+      <td class="px-3 py-2 small text-muted text-nowrap">${updatedAt}</td>
+      <td class="px-3 py-2 small text-muted text-nowrap">${createdAt}</td>
+      <td class="px-3 py-2 small text-muted">${lastUpdatedBy}</td>
+      <td class="px-3 py-2 small text-muted text-center">${latestVersion}</td>
+      <td class="px-3 py-2 text-end text-nowrap">
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary open-btn" title="Open">
+            <i class="bi bi-folder2-open"></i>
           </button>
-          <button class="btn btn-sm btn-outline-secondary history-btn">
+          <button class="btn btn-outline-secondary history-btn" title="Version History">
             <i class="bi bi-clock-history"></i>
           </button>
-          <button class="btn btn-sm btn-outline-danger delete-btn">
+          <button class="btn btn-outline-danger delete-btn" title="Delete">
             <i class="bi bi-trash"></i>
           </button>
-        </td>
-      `;
+        </div>
+      </td>
+    `;
 
-      row.querySelector('.open-btn').onclick = () => onOpen(d.id);
-      row.querySelector('.history-btn').onclick = () => onHistory(d.id);
-      row.querySelector('.delete-btn').onclick = () => {
-        showConfirmModal(
-          'Delete Diagram',
-          'This will delete the diagram and all version history. Are you sure?',
-          () => onDelete(d.id),
-          'Delete',
-          'btn-danger'
-        );
-      };
+    row.querySelector('.open-btn').onclick = (e) => { e.stopPropagation(); onOpen(d.id); };
+    row.querySelector('.history-btn').onclick = (e) => { e.stopPropagation(); onHistory(d.id); };
+    row.querySelector('.delete-btn').onclick = (e) => {
+      e.stopPropagation();
+      showConfirmModal(
+        'Delete Diagram',
+        'This will delete the diagram and all version history. Are you sure?',
+        () => onDelete(d.id),
+        'Delete',
+        'btn-danger'
+      );
+    };
+    row.ondblclick = () => onOpen(d.id);
 
-      tbody.appendChild(row);
-    });
-  };
-
-  renderRows(owned, false);
-
-  if (collaborated.length > 0) {
-    if (owned.length > 0) {
-      const divider = document.createElement('tr');
-      divider.innerHTML = `<td colspan="5" class="text-muted pt-3"><h6><i class="bi bi-people me-2"></i>Shared with me</h6></td>`;
-      tbody.appendChild(divider);
-    }
-    renderRows(collaborated, true);
-  }
+    tbody.appendChild(row);
+  });
 }
 
 /* ===============================
