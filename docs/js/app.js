@@ -131,6 +131,17 @@ async function saveDiagram() {
   });
 }
 
+async function saveDiagramWithName(name) {
+  const xml = await getXML();
+  const diagram = await service.createDiagram(name);
+  currentDiagramId = diagram.id;
+  await service.saveVersion(currentDiagramId, xml, 'Initial version');
+  const details = await service.getDiagramDetails(currentDiagramId);
+  ui.renderDiagramDetails(details);
+  markClean();
+  ui.showToast(`Diagram "${name}" saved.`, 'success');
+}
+
 /* ===============================
    HISTORY
 ================================= */
@@ -438,15 +449,21 @@ document.getElementById('btnLogout').onclick = () => confirmIfDirty(withErrorHan
   ui.showAuth();
 }));
 
-document.getElementById('btnRename').onclick = withErrorHandling(() => {
-  const nameEl = document.getElementById('diagramName');
-  const currentName = nameEl.textContent;
-
-  ui.enableRename(currentName, async (newName) => {
-    if(!currentDiagramId) return ui.showToast('No diagram selected.', 'warning');
-    await service.renameDiagram(currentDiagramId, newName);
-  });
-});
+document.getElementById('btnRename').onclick = () => {
+  const currentName = document.getElementById('diagramName').textContent.trim();
+  ui.enableRename(
+    currentName,
+    withErrorHandling(async (newName) => {
+      if (!currentDiagramId) {
+        // No diagram saved yet — save it now with the given name
+        await saveDiagramWithName(newName);
+      } else {
+        await service.renameDiagram(currentDiagramId, newName);
+        ui.showToast('Diagram renamed', 'success');
+      }
+    })
+  );
+};
 
 document.getElementById('btnLoginAnonymous').onclick = () => {
   // Clear the shared diagram from URL so after login they go to overview

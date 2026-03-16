@@ -839,16 +839,14 @@ export function enableRename(currentName, onSave) {
   const nameEl = document.getElementById('diagramName');
   const btn = document.getElementById('btnRename');
 
-  // Replace name with input
   nameEl.innerHTML = `<input type="text" class="form-control form-control-sm" id="diagramRenameInput" value="${currentName}">`;
 
   const input = document.getElementById('diagramRenameInput');
   input.focus();
   input.select();
 
-  // Change button to "Save"
   btn.textContent = 'Save';
-  btn.classList.replace('btn-secondary', 'btn-success');
+  btn.classList.replace('btn-outline-secondary', 'btn-success');
 
   const saveHandler = async () => {
     const newName = input.value.trim();
@@ -858,13 +856,12 @@ export function enableRename(currentName, onSave) {
 
     nameEl.textContent = newName;
     btn.textContent = 'Rename';
-    btn.classList.replace('btn-success', 'btn-secondary');
-
-    // Rebind original handler
+    btn.classList.replace('btn-success', 'btn-outline-secondary');
     btn.onclick = () => enableRename(newName, onSave);
   };
 
   btn.onclick = saveHandler;
+  input.onkeydown = (e) => { if (e.key === 'Enter') saveHandler(); };
 }
 
 export function showToast(message, type = 'success') {
