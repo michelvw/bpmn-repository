@@ -428,17 +428,30 @@ export async function getTagsAdmin() {
       name,
       color,
       created_by,
-      users!tags_created_by_fkey(username),
       diagram_tags(id)
     `)
     .order('name', { ascending: true });
 
   if (error) throw error;
+
+  // Look up creator usernames separately
+  const userIds = [...new Set(data.map(t => t.created_by).filter(Boolean))];
+  let users = [];
+
+  if (userIds.length > 0) {
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, username')
+      .in('id', userIds);
+    if (usersError) throw usersError;
+    users = usersData;
+  }
+
   return data.map(t => ({
     id: t.id,
     name: t.name,
     color: t.color,
-    createdBy: t.users?.username || '-',
+    createdBy: users.find(u => u.id === t.created_by)?.username || '-',
     usageCount: t.diagram_tags?.length || 0
   }));
 }
