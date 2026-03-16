@@ -39,6 +39,20 @@ function withErrorHandling(fn) {
   };
 }
 
+function patchProcessName(xml, name) {
+  // Escape special characters in name for XML attribute
+  const escaped = name
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Replace existing name attribute or add it if missing
+  return xml
+    .replace(/(<bpmn:process\b[^>]*)\sname="[^"]*"/, `$1 name="${escaped}"`)
+    .replace(/(<bpmn:process\b)(?![^>]*\sname=")/, `$1 name="${escaped}"`);
+}
+
 /* ===============================
    OVERVIEW
 ================================= */
@@ -104,7 +118,11 @@ async function openDiagram(id) {
 /* ===============================
    SAVE DIAGRAM
 ================================= */
-async function saveDiagram() {  
+async function saveDiagram() { 
+  let xml = await getXML();
+  const name = document.getElementById('diagramName').textContent.trim();
+  xml = patchProcessName(xml, name);
+
   if (!currentDiagramId) {
     ui.showInputModal('Diagram Name', 'Enter a name...', async (name) => {      
       const data = await service.createDiagram(name);      
@@ -132,7 +150,8 @@ async function saveDiagram() {
 }
 
 async function saveDiagramWithName(name) {
-  const xml = await getXML();
+  let xml = await getXML();
+  xml = patchProcessName(xml, name);
   const diagram = await service.createDiagram(name);
   currentDiagramId = diagram.id;
   await service.saveVersion(currentDiagramId, xml, 'Initial version');
@@ -455,10 +474,15 @@ document.getElementById('btnRename').onclick = () => {
     currentName,
     withErrorHandling(async (newName) => {
       if (!currentDiagramId) {
-        // No diagram saved yet — save it now with the given name
         await saveDiagramWithName(newName);
       } else {
         await service.renameDiagram(currentDiagramId, newName);
+        // Patch and save a new version with the updated process name
+        let xml = await getXML();
+        xml = patchProcessName(xml, newName);
+        await service.saveVersion(currentDiagramId, xml, `Renamed to "${newName}"`);
+        markDirty(); // XML changed so mark dirty, then clean after save
+        markClean();
         ui.showToast('Diagram renamed', 'success');
       }
     })
