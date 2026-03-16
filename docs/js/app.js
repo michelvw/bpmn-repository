@@ -113,6 +113,7 @@ async function openDiagram(id) {
   ui.renderDiagramDetails(detailData);
   ui.resetSaveButton(saveDiagram);
   ui.showEditor();
+  history.pushState({ view: 'editor', diagramId: id }, '', `?diagram=${id}`);
 }
 
 /* ===============================
@@ -611,5 +612,18 @@ window.addEventListener('DOMContentLoaded', withErrorHandling(async () => {
     }
   } else {
     ui.showAuth();
+  }
+}));
+
+window.addEventListener('popstate', withErrorHandling(async (event) => {
+  const state = event.state;
+
+  if (!state || state.view === 'overview') {
+    confirmIfDirty(withErrorHandling(async () => {
+      currentDiagramId = null;
+      await loadOverview();
+    }));
+  } else if (state.view === 'editor' && state.diagramId) {
+    await openDiagram(state.diagramId);
   }
 }));
