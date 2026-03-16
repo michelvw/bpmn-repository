@@ -464,3 +464,26 @@ export async function deleteTag(tagId) {
 
   if (error) throw error;
 }
+
+export async function getDiagramsByOwner(userId) {
+  const { data, error } = await supabase
+    .from('diagrams')
+    .select(`
+      id,
+      name,
+      updated_at,
+      diagram_versions(version)
+    `)
+    .eq('owner_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  return data.map(d => ({
+    id: d.id,
+    name: d.name,
+    updatedAt: d.updated_at,
+    latestVersion: d.diagram_versions?.length
+      ? Math.max(...d.diagram_versions.map(v => v.version))
+      : '-'
+  }));
+}

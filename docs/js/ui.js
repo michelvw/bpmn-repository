@@ -50,26 +50,64 @@ export function showOverview() {
   document.getElementById('overviewPage').classList.remove('d-none');
 }
 
-export function renderAdminUserTable(users, currentUserId, onDelete) {
+export function renderAdminUserTable(users, currentUserId, onDelete, onRename, onToggleAdmin, onResetPassword, onViewDiagrams) {
   const tbody = document.getElementById('adminUserTable');
   tbody.innerHTML = '';
 
   users.forEach(u => {
+    const isSelf = u.id === currentUserId;
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${u.username || '-'}</td>
-      <td>${u.is_admin ? '<span class="badge bg-danger">Admin</span>' : '<span class="badge bg-secondary">User</span>'}</td>
+      <td>${u.is_admin
+        ? '<span class="badge bg-danger">Admin</span>'
+        : '<span class="badge bg-secondary">User</span>'}
+      </td>
       <td>
-        ${u.id !== currentUserId && !u.is_admin ? `
-          <button class="btn btn-sm btn-outline-danger delete-user-btn">
-            <i class="bi bi-trash me-1"></i>Delete
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary rename-btn" title="Rename">
+            <i class="bi bi-pencil"></i>
           </button>
-        ` : '-'}
+          <button class="btn btn-outline-secondary diagrams-btn" title="View Diagrams">
+            <i class="bi bi-diagram-3"></i>
+          </button>
+          <button class="btn btn-outline-secondary reset-btn" title="Send Password Reset">
+            <i class="bi bi-key"></i>
+          </button>
+          ${!isSelf ? `
+            <button class="btn btn-outline-${u.is_admin ? 'warning' : 'success'} toggle-admin-btn"
+                    title="${u.is_admin ? 'Demote to User' : 'Promote to Admin'}">
+              <i class="bi bi-${u.is_admin ? 'arrow-down-circle' : 'arrow-up-circle'}"></i>
+            </button>
+            <button class="btn btn-outline-danger delete-btn" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          ` : ''}
+        </div>
       </td>
     `;
 
-    if (u.id !== currentUserId && !u.is_admin) {
-      row.querySelector('.delete-user-btn').onclick = () => {
+    row.querySelector('.rename-btn').onclick = () => {
+      showInputModal('Rename User', 'Enter new username', async (newName) => {
+        await onRename(u.id, newName);
+      });
+    };
+
+    row.querySelector('.diagrams-btn').onclick = () => onViewDiagrams(u.id, u.username);
+    row.querySelector('.reset-btn').onclick = () => onResetPassword(u.id, u.username);
+
+    if (!isSelf) {
+      row.querySelector('.toggle-admin-btn').onclick = () => {
+        showConfirmModal(
+          u.is_admin ? 'Demote to User' : 'Promote to Admin',
+          `${u.is_admin ? 'Remove admin rights from' : 'Grant admin rights to'} "${u.username}"?`,
+          () => onToggleAdmin(u.id, !u.is_admin),
+          'Confirm',
+          u.is_admin ? 'btn-warning' : 'btn-success'
+        );
+      };
+
+      row.querySelector('.delete-btn').onclick = () => {
         showConfirmModal(
           'Delete User',
           `This will permanently delete "${u.username}" and all their diagrams. Are you sure?`,
@@ -82,6 +120,31 @@ export function renderAdminUserTable(users, currentUserId, onDelete) {
 
     tbody.appendChild(row);
   });
+}
+
+export function showUserDiagramsModal(username, diagrams) {
+  document.getElementById('userDiagramsUsername').textContent = username;
+
+  const tbody = document.getElementById('userDiagramsList');
+  const empty = document.getElementById('userDiagramsEmpty');
+  tbody.innerHTML = '';
+
+  if (diagrams.length === 0) {
+    empty.classList.remove('d-none');
+  } else {
+    empty.classList.add('d-none');
+    diagrams.forEach(d => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-3 fw-medium">${d.name}</td>
+        <td class="px-3 small text-muted">${d.updatedAt ? new Date(d.updatedAt).toLocaleString() : '-'}</td>
+        <td class="px-3 small text-muted text-center">${d.latestVersion}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('userDiagramsModal')).show();
 }
 
 export function showAnonymousEditor() {

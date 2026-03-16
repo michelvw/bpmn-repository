@@ -277,11 +277,35 @@ async function openAdminPage() {
     service.getTagsAdmin()
   ]);
 
-  ui.renderAdminUserTable(users, currentUser.id,
+  ui.renderAdminUserTable(
+    users,
+    currentUser.id,
     withErrorHandling(async (userId) => {
       await userService.deleteUser(userId);
       ui.showToast('User deleted.', 'success');
       await openAdminPage();
+    }),
+    withErrorHandling(async (userId, newName) => {
+      await userService.renameUser(userId, newName);
+      ui.showToast('Username updated.', 'success');
+      await openAdminPage();
+    }),
+    withErrorHandling(async (userId, isAdmin) => {
+      await userService.setAdminRole(userId, isAdmin);
+      ui.showToast(`User ${isAdmin ? 'promoted to admin' : 'demoted to user'}.`, 'success');
+      await openAdminPage();
+    }),
+    withErrorHandling(async (userId, username) => {
+      const email = await userService.getUserEmail(userId);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+      if (error) throw error;
+      ui.showToast(`Password reset email sent to ${username}.`, 'success');
+    }),
+    withErrorHandling(async (userId, username) => {
+      const diagrams = await service.getDiagramsByOwner(userId);
+      ui.showUserDiagramsModal(username, diagrams);
     })
   );
 

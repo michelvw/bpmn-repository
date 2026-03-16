@@ -60,3 +60,27 @@ export async function deleteUser(userId) {
   const { error } = await supabase.rpc('delete_user', { p_user_id: userId });
   if (error) throw error;
 }
+
+export async function renameUser(userId, username) {
+  const { error } = await supabase.rpc('rename_user', {
+    p_user_id: userId,
+    p_username: username
+  });
+  if (error) throw error;
+}
+
+export async function setAdminRole(userId, isAdmin) {
+  const { error } = await supabase.rpc('set_admin_role', {
+    p_user_id: userId,
+    p_is_admin: isAdmin
+  });
+  if (error) throw error;
+}
+
+export async function getUserEmail(userId) {
+  const { data, error } = await supabase.rpc('get_user_email', {
+    p_user_id: userId
+  });
+  if (error) throw error;
+  return data;
+}
