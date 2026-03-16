@@ -407,3 +407,47 @@ export async function removeTagFromDiagram(diagramTagId) {
 
   if (error) throw error;
 }
+
+export async function renameTag(tagId, name) {
+  const normalizedName = name.trim().toLowerCase();
+  if (!normalizedName) throw new Error('Tag name cannot be empty');
+
+  const { error } = await supabase
+    .from('tags')
+    .update({ name: normalizedName })
+    .eq('id', tagId);
+
+  if (error) throw error;
+}
+
+export async function getTagsAdmin() {
+  const { data, error } = await supabase
+    .from('tags')
+    .select(`
+      id,
+      name,
+      color,
+      created_by,
+      users!tags_created_by_fkey(username),
+      diagram_tags(id)
+    `)
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return data.map(t => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    createdBy: t.users?.username || '-',
+    usageCount: t.diagram_tags?.length || 0
+  }));
+}
+
+export async function deleteTag(tagId) {
+  const { error } = await supabase
+    .from('tags')
+    .delete()
+    .eq('id', tagId);
+
+  if (error) throw error;
+}

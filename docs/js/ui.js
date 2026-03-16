@@ -864,6 +864,81 @@ export function enableRename(currentName, onSave) {
   input.onkeydown = (e) => { if (e.key === 'Enter') saveHandler(); };
 }
 
+export function renderAdminTagTable(tags, onRename, onColorChange, onDelete) {
+  const tbody = document.getElementById('adminTagTable');
+  const empty = document.getElementById('adminTagsEmpty');
+  tbody.innerHTML = '';
+
+  if (tags.length === 0) {
+    empty.classList.remove('d-none');
+    return;
+  }
+  empty.classList.add('d-none');
+
+  tags.forEach(tag => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="fw-medium">
+        <span class="badge rounded-pill" style="background-color:${tag.color}">${tag.name}</span>
+      </td>
+      <td>
+        <div class="d-flex flex-wrap gap-1" id="adminColorPicker-${tag.id}">
+          ${TAG_COLORS.map(c => `
+            <div class="admin-color-swatch"
+                 data-tag-id="${tag.id}"
+                 data-color="${c.value}"
+                 title="${c.name}"
+                 style="width:18px; height:18px; border-radius:50%; background:${c.value}; cursor:pointer;
+                        border: 2px solid ${c.value === tag.color ? '#000' : 'transparent'}">
+            </div>
+          `).join('')}
+        </div>
+      </td>
+      <td class="small text-muted">${tag.createdBy}</td>
+      <td class="small text-muted">${tag.usageCount} diagram${tag.usageCount !== 1 ? 's' : ''}</td>
+      <td>
+        <div class="btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary rename-tag-btn" title="Rename">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-outline-danger delete-tag-btn" title="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </td>
+    `;
+
+    // Colour swatches
+    row.querySelectorAll('.admin-color-swatch').forEach(swatch => {
+      swatch.onclick = () => onColorChange(tag.id, swatch.dataset.color);
+    });
+
+    // Rename
+    row.querySelector('.rename-tag-btn').onclick = () => {
+      showInputModal(
+        'Rename Tag',
+        'Enter new tag name',
+        async (newName) => {
+          await onRename(tag.id, newName);
+        }
+      );
+    };
+
+    // Delete
+    row.querySelector('.delete-tag-btn').onclick = () => {
+      showConfirmModal(
+        'Delete Tag',
+        `Delete tag "${tag.name}"? It will be removed from all diagrams.`,
+        () => onDelete(tag.id),
+        'Delete',
+        'btn-danger'
+      );
+    };
+
+    tbody.appendChild(row);
+  });
+}
+
 export function showToast(message, type = 'success') {
   const toastEl = document.getElementById('appToast');
   const toastMsg = document.getElementById('toastMessage');

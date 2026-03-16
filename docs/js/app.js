@@ -272,18 +272,55 @@ async function handleSignup(email, password, confirmPassword) {
    OPEN ADMIN PAGE
 ================================= */
 async function openAdminPage() {
-  const users = await userService.getAllUsers();
-  ui.renderAdminUserTable(
-    users,
-    currentUser.id,
+  const [users, tags] = await Promise.all([
+    userService.getAllUsers(),
+    service.getTagsAdmin()
+  ]);
+
+  ui.renderAdminUserTable(users, currentUser.id,
     withErrorHandling(async (userId) => {
       await userService.deleteUser(userId);
       ui.showToast('User deleted.', 'success');
       await openAdminPage();
     })
   );
+
+  ui.renderAdminTagTable(
+    tags,
+    withErrorHandling(async (tagId, newName) => {
+      await service.renameTag(tagId, newName);
+      ui.showToast('Tag renamed.', 'success');
+      await openAdminPage();
+    }),
+    withErrorHandling(async (tagId, color) => {
+      await service.updateTagColor(tagId, color);
+      ui.showToast('Colour updated.', 'success');
+      await openAdminPage();
+    }),
+    withErrorHandling(async (tagId) => {
+      await service.deleteTag(tagId);
+      ui.showToast('Tag deleted.', 'success');
+      await openAdminPage();
+    })
+  );
+
   ui.showAdmin();
 }
+
+// Section toggles
+document.getElementById('adminUsersToggle').onclick = () => {
+  const section = document.getElementById('adminUsersSection');
+  const chevron = document.getElementById('adminUsersChevron');
+  const isHidden = section.classList.toggle('d-none');
+  chevron.className = `bi ${isHidden ? 'bi-chevron-right' : 'bi-chevron-down'}`;
+};
+
+document.getElementById('adminTagsToggle').onclick = () => {
+  const section = document.getElementById('adminTagsSection');
+  const chevron = document.getElementById('adminTagsChevron');
+  const isHidden = section.classList.toggle('d-none');
+  chevron.className = `bi ${isHidden ? 'bi-chevron-right' : 'bi-chevron-down'}`;
+};
 
 /* ===============================
    OPEN SHARE MODAL
