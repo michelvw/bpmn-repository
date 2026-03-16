@@ -24,14 +24,15 @@ export async function getDiagrams() {
 
   const collaboratorDiagramIds = await getCollaboratorDiagramIds(user.id);
 
-  let query = supabase
+let query = supabase
   .from('diagrams')
   .select(`
     id,
     name,
     updated_at,
     owner_id,
-    diagram_versions(version, created_by),
+    owner:owner_id(username),
+    diagram_versions(version, created_by, created_at),
     diagram_tags(id, tag_id, tags(name, color))
   `)
   .order('updated_at', { ascending: false });
