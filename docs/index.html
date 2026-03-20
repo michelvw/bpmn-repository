@@ -173,7 +173,7 @@
   </div>
 
   <!-- Tag filter bar -->
-  <div id="tagFilterBar" class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+  <div id="tagFilterBar" class="mb-4 mt-2 d-flex flex-wrap gap-2 align-items-center">
     <small class="text-muted me-1"><i class="bi bi-tag me-1"></i>Filter:</small>
   </div>
 
@@ -183,7 +183,7 @@
   <!-- Table view -->
   <div id="diagramTableView">
     <!-- My Diagrams table -->
-    <div class="mb-4">
+    <div class="mb-5">
       <h6 class="text-muted mb-2"><i class="bi bi-person me-2"></i>My Diagrams</h6>
       <div class="table-responsive">
         <table id="myDiagramsTable" class="table table-hover align-middle mb-0 border rounded">
@@ -198,7 +198,7 @@
     </div>
 
     <!-- Shared with me table -->
-    <div id="sharedTableSection" class="d-none">
+    <div id="sharedTableSection" class="d-none mt-4">
       <h6 class="text-muted mb-2"><i class="bi bi-people me-2"></i>Shared with me</h6>
       <div class="table-responsive">
         <table id="sharedDiagramsTable" class="table table-hover align-middle mb-0 border rounded">
@@ -279,7 +279,7 @@
     <div class="container-fluid px-0">
 
       <!-- Diagram name + rename + tags -->
-      <div class="d-flex align-items-center me-3 gap-2">
+      <div class="d-flex align-items-center me-3 gap-3">
         <h6 id="diagramName" class="mb-0 fw-semibold"></h6>
         <button id="btnRename" class="btn btn-sm btn-outline-secondary">
           <i class="bi bi-pencil"></i> Rename
@@ -290,15 +290,17 @@
                   id="btnTagsDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside">
             <i class="bi bi-tag"></i> Tags
           </button>
-          <div class="dropdown-menu p-2" style="min-width: 260px;">
+          <div class="dropdown-menu p-3" style="min-width: 260px;">
             <div id="currentTags" class="mb-2"></div>
+            <div class="mt-3">
             <div class="input-group input-group-sm">
-              <input type="text" id="tagInput" class="form-control" placeholder="Add tag...">
+              <input type="text" id="tagInput" class="form-control" placeholder="New tag name...">
               <button class="btn btn-primary" id="btnAddTag">
                 <i class="bi bi-plus"></i>
               </button>
             </div>
-            <div id="tagSuggestions" class="mt-1"></div>
+          </div>
+          <div id="tagSuggestions" class="mt-2"></div>
           </div>
         </div>
       </div>

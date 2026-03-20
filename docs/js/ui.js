@@ -289,22 +289,23 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
     });
   };
 
-  // Render owned diagrams
+  // Owned section header
   if (owned.length > 0) {
+    grid.insertAdjacentHTML('beforeend', `
+      <h6 class="text-muted mt-2 mb-3"><i class="bi bi-person me-2"></i>My Diagrams</h6>
+    `);
     const ownedRow = document.createElement('div');
     ownedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
     grid.appendChild(ownedRow);
     renderTiles(owned, false, ownedRow);
   }
 
-  // Divider + collaborated section
+  // Collaborated section
   if (collaborated.length > 0) {
-    if (owned.length > 0) {
-      grid.insertAdjacentHTML('beforeend', `
-        <h6 class="text-muted mt-4"><i class="bi bi-people me-2"></i>Shared with me</h6>
-        <hr class="mt-1 mb-3">
-      `);
-    }
+    grid.insertAdjacentHTML('beforeend', `
+      <h6 class="text-muted mt-5 mb-3"><i class="bi bi-people me-2"></i>Shared with me</h6>
+      <hr class="mt-0 mb-3">
+    `);
     const collaboratedRow = document.createElement('div');
     collaboratedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
     grid.appendChild(collaboratedRow);
@@ -502,8 +503,9 @@ export function renderTagsDropdown(currentTags, allTags, onAdd, onRemove, onColo
 
   // Colour picker for new tags
   suggestionsEl.innerHTML = `
-    <div class="mb-2">
-      <small class="text-muted d-block mb-1">Colour for new tag:</small>
+    <hr class="my-2">
+    <div class="mb-3">
+      <small class="text-muted d-block mb-2">Colour for new tag:</small>
       <div class="d-flex flex-wrap gap-1" id="newTagColorPicker">
         ${TAG_COLORS.map(c => `
           <div class="color-swatch-new"
