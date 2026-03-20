@@ -182,9 +182,17 @@
   
   <!-- Table view -->
   <div id="diagramTableView">
-    <!-- My Diagrams table -->
-    <div class="mb-5">
-      <h6 class="text-muted mb-2"><i class="bi bi-person me-2"></i>My Diagrams</h6>
+  <!-- My Diagrams table -->
+  <div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3"
+         style="cursor:pointer" id="myTableHeader">
+      <h6 class="text-muted mb-0">
+        <i class="bi bi-person me-2"></i>My Diagrams
+      </h6>
+      <i class="bi bi-chevron-down text-muted" id="myTableChevron"></i>
+    </div>
+    <hr class="mt-0 mb-3">
+    <div id="myDiagramsTableSection">
       <div class="table-responsive">
         <table id="myDiagramsTable" class="table table-hover align-middle mb-0 border rounded">
           <thead id="myDiagramsTableHead"></thead>
@@ -196,10 +204,19 @@
         <p class="mt-2">No diagrams yet.</p>
       </div>
     </div>
+  </div>
 
-    <!-- Shared with me table -->
-    <div id="sharedTableSection" class="d-none mt-4">
-      <h6 class="text-muted mb-2"><i class="bi bi-people me-2"></i>Shared with me</h6>
+  <!-- Shared with me table -->
+  <div id="sharedTableSection" class="d-none mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3"
+         style="cursor:pointer" id="sharedTableHeader">
+      <h6 class="text-muted mb-0">
+        <i class="bi bi-people me-2"></i>Shared with me
+      </h6>
+      <i class="bi bi-chevron-down text-muted" id="sharedTableChevron"></i>
+    </div>
+    <hr class="mt-0 mb-3">
+    <div id="sharedDiagramsTableSection">
       <div class="table-responsive">
         <table id="sharedDiagramsTable" class="table table-hover align-middle mb-0 border rounded">
           <thead id="sharedDiagramsTableHead"></thead>
@@ -207,7 +224,8 @@
         </table>
       </div>
     </div>
-</div>
+  </div>
+  </div>
 
 </div>
 

@@ -17,6 +17,9 @@ const TAG_COLORS = [
 let sortColumn = 'updated_at';
 let sortDirection = 'desc';
 
+let ownedCollapsed = false;
+let sharedCollapsed = false;
+
 /* ===============================
    UI MODULE
 ================================= */
@@ -297,27 +300,60 @@ export function renderGrid(diagrams, currentUserId, onOpen, onDelete, onHistory,
     });
   };
 
-  // Owned section header
   if (owned.length > 0) {
-    grid.insertAdjacentHTML('beforeend', `
-      <h6 class="text-muted mt-2 mb-3"><i class="bi bi-person me-2"></i>My Diagrams</h6>
-    `);
+    const ownedHeader = document.createElement('div');
+    ownedHeader.className = 'd-flex justify-content-between align-items-center mt-2 mb-3';
+    ownedHeader.style.cursor = 'pointer';
+    ownedHeader.id = 'ownedSectionHeader';
+    ownedHeader.innerHTML = `
+      <h6 class="text-muted mb-0"><i class="bi bi-person me-2"></i>My Diagrams
+        <span class="badge bg-secondary ms-2">${owned.length}</span>
+      </h6>
+      <i class="bi ${ownedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted"></i>
+    `;
+    grid.appendChild(ownedHeader);
+
     const ownedRow = document.createElement('div');
-    ownedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
+    ownedRow.id = 'ownedTilesSection';
+    ownedRow.className = `row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 ${ownedCollapsed ? 'd-none' : ''}`;
     grid.appendChild(ownedRow);
     renderTiles(owned, false, ownedRow);
+
+    ownedHeader.onclick = () => {
+      ownedCollapsed = !ownedCollapsed;
+      ownedRow.classList.toggle('d-none', ownedCollapsed);
+      ownedHeader.querySelector('i.bi-chevron-down, i.bi-chevron-right').className =
+        `bi ${ownedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+      syncTableCollapse();
+    };
   }
 
-  // Collaborated section
   if (collaborated.length > 0) {
-    grid.insertAdjacentHTML('beforeend', `
-      <h6 class="text-muted mt-5 mb-3"><i class="bi bi-people me-2"></i>Shared with me</h6>
-      <hr class="mt-0 mb-3">
-    `);
+    const sharedHeader = document.createElement('div');
+    sharedHeader.className = 'd-flex justify-content-between align-items-center mt-5 mb-3';
+    sharedHeader.style.cursor = 'pointer';
+    sharedHeader.id = 'sharedSectionHeader';
+    sharedHeader.innerHTML = `
+      <h6 class="text-muted mb-0"><i class="bi bi-people me-2"></i>Shared with me
+        <span class="badge bg-secondary ms-2">${collaborated.length}</span>
+      </h6>
+      <i class="bi ${sharedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted"></i>
+    `;
+    grid.appendChild(sharedHeader);
+
     const collaboratedRow = document.createElement('div');
-    collaboratedRow.className = 'row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3';
+    collaboratedRow.id = 'sharedTilesSection';
+    collaboratedRow.className = `row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 ${sharedCollapsed ? 'd-none' : ''}`;
     grid.appendChild(collaboratedRow);
     renderTiles(collaborated, true, collaboratedRow);
+
+    sharedHeader.onclick = () => {
+      sharedCollapsed = !sharedCollapsed;
+      collaboratedRow.classList.toggle('d-none', sharedCollapsed);
+      sharedHeader.querySelector('i.bi-chevron-down, i.bi-chevron-right').className =
+        `bi ${sharedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+      syncTableCollapse();
+    };
   }
 
   setupLazyPreviews(onPreview);
@@ -618,6 +654,38 @@ export function renderTable(diagrams, currentUserId, onOpen, onDelete, onHistory
     true,
     onOpen, onDelete, onHistory
   );
+  // Wire up collapsible headers
+  const myHeader = document.getElementById('myTableHeader');
+  const sharedHeader = document.getElementById('sharedTableHeader');
+
+  if (myHeader) {
+    myHeader.onclick = () => {
+      ownedCollapsed = !ownedCollapsed;
+      syncTableCollapse();
+      // Sync tile view too
+      const tilesSection = document.getElementById('ownedTilesSection');
+      const tilesHeader = document.getElementById('ownedSectionHeader');
+      if (tilesSection) tilesSection.classList.toggle('d-none', ownedCollapsed);
+      if (tilesHeader) {
+        tilesHeader.querySelector('i.bi-chevron-down, i.bi-chevron-right').className =
+          `bi ${ownedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+      }
+    };
+  }
+
+  if (sharedHeader) {
+    sharedHeader.onclick = () => {
+      sharedCollapsed = !sharedCollapsed;
+      syncTableCollapse();
+      const tilesSection = document.getElementById('sharedTilesSection');
+      const tilesHeader = document.getElementById('sharedSectionHeader');
+      if (tilesSection) tilesSection.classList.toggle('d-none', sharedCollapsed);
+      if (tilesHeader) {
+        tilesHeader.querySelector('i.bi-chevron-down, i.bi-chevron-right').className =
+          `bi ${sharedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+      }
+    };
+  }
 }
 
 function renderSingleTable(headId, bodyId, emptyId, diagrams, isShared, onOpen, onDelete, onHistory) {
@@ -1155,6 +1223,22 @@ function renderCollaboratorList(collaborators, onRemove) {
     li.querySelector('.remove-btn').onclick = () => onRemove(c.id);
     list.appendChild(li);
   });
+}
+
+function syncTableCollapse() {
+  const mySection = document.getElementById('myDiagramsTableSection');
+  const sharedSection = document.getElementById('sharedDiagramsTableSection');
+
+  if (mySection) {
+    mySection.classList.toggle('d-none', ownedCollapsed);
+    const chevron = document.getElementById('myTableChevron');
+    if (chevron) chevron.className = `bi ${ownedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+  }
+  if (sharedSection) {
+    sharedSection.classList.toggle('d-none', sharedCollapsed);
+    const chevron = document.getElementById('sharedTableChevron');
+    if (chevron) chevron.className = `bi ${sharedCollapsed ? 'bi-chevron-right' : 'bi-chevron-down'} text-muted`;
+  }
 }
 
 export function showConfirmModal(title, message, onConfirm, confirmLabel = 'Confirm', confirmClass = 'btn-danger') {
