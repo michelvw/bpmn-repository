@@ -470,6 +470,31 @@ document.getElementById('btnDelete').onclick = withErrorHandling(async () => {
   );
 });
 
+document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const confirmField = document.getElementById('confirmPasswordSignup');
+    if (!confirmField.classList.contains('d-none')) {
+      // Confirm field is visible — move focus to it instead
+      confirmField.focus();
+    } else {
+      handleLogin(
+        document.getElementById('emailInput').value,
+        document.getElementById('passwordInput').value
+      );
+    }
+  }
+});
+
+document.getElementById('confirmPasswordSignup').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    handleSignup(
+      document.getElementById('emailInput').value,
+      document.getElementById('passwordInput').value,
+      document.getElementById('confirmPasswordSignup').value
+    );
+  }
+});
+
 // Helper to get current diagram name for the filename
 function getDiagramName() {
   return document.getElementById('diagramName').textContent.replace(' (read-only)', '').trim() || 'diagram';
