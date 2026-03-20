@@ -64,8 +64,6 @@ async function loadOverview() {
 
   allDiagramsCache = data;
 
-
-
   const renderBoth = (diagrams) => {
     ui.renderGrid(diagrams, currentUser.id,
       (id) => confirmIfDirty(withErrorHandling(() => openDiagram(id))),
@@ -95,6 +93,14 @@ async function loadOverview() {
   renderBoth(data);
 
   ui.resetSaveButton(saveDiagram);
+ 
+  const isAlreadyInOverview = !document.getElementById('overviewPage').classList.contains('d-none');
+  if (isAlreadyInOverview) {
+    history.replaceState({ view: 'overview' }, '', window.location.pathname);
+  } else {
+    history.pushState({ view: 'overview' }, '', window.location.pathname);
+  }
+
   ui.showOverview();
 }
 
@@ -112,8 +118,15 @@ async function openDiagram(id) {
   markClean();
   ui.renderDiagramDetails(detailData);
   ui.resetSaveButton(saveDiagram);
+
+  const isAlreadyInEditor = !document.getElementById('editorPage').classList.contains('d-none');
+  if (isAlreadyInEditor) {
+    history.replaceState({ view: 'editor', diagramId: id }, '', `?diagram=${id}`);
+  } else {
+    history.pushState({ view: 'editor', diagramId: id }, '', `?diagram=${id}`);
+  }
+
   ui.showEditor();
-  history.pushState({ view: 'editor', diagramId: id }, '', `?diagram=${id}`);
 }
 
 /* ===============================
