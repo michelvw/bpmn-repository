@@ -75,19 +75,20 @@ export function renderAdminUserTable(users, currentUserId, onDelete, onRename, o
     const isSelf = u.id === currentUserId;
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${u.username || '-'}</td>
-      <td class="small text-muted">${u.email || '-'}</td>
-      <td>${u.is_admin
-        ? '<span class="badge bg-danger">Admin</span>'
-        : '<span class="badge bg-secondary">User</span>'}
+      <td class="px-3 py-2 fw-medium">${u.username || '-'}</td>
+      <td class="px-3 py-2 small text-muted">${u.email || '-'}</td>
+      <td class="px-3 py-2">
+        ${u.is_admin
+          ? '<span class="badge bg-danger">Admin</span>'
+          : '<span class="badge bg-secondary">User</span>'}
       </td>
-      <td class="small text-muted text-nowrap">
+      <td class="px-3 py-2 small text-muted text-nowrap">
         ${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : 'Never'}
       </td>
-      <td class="small text-muted text-nowrap">
+      <td class="px-3 py-2 small text-muted text-nowrap">
         ${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}
       </td>
-      <td>
+      <td class="px-3 py-2 text-end text-nowrap">
         <div class="btn-group btn-group-sm">
           <button class="btn btn-outline-secondary rename-btn" title="Rename">
             <i class="bi bi-pencil"></i>
@@ -967,25 +968,25 @@ export function renderAdminTagTable(tags, onRename, onColorChange, onDelete) {
   tags.forEach(tag => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td class="fw-medium">
+      <td class="px-3 py-2 fw-medium">
         <span class="badge rounded-pill" style="background-color:${tag.color}">${tag.name}</span>
       </td>
-      <td>
+      <td class="px-3 py-2">
         <div class="d-flex flex-wrap gap-1" id="adminColorPicker-${tag.id}">
           ${TAG_COLORS.map(c => `
             <div class="admin-color-swatch"
-                 data-tag-id="${tag.id}"
-                 data-color="${c.value}"
-                 title="${c.name}"
-                 style="width:18px; height:18px; border-radius:50%; background:${c.value}; cursor:pointer;
+                data-tag-id="${tag.id}"
+                data-color="${c.value}"
+                title="${c.name}"
+                style="width:18px; height:18px; border-radius:50%; background:${c.value}; cursor:pointer;
                         border: 2px solid ${c.value === tag.color ? '#000' : 'transparent'}">
             </div>
           `).join('')}
         </div>
       </td>
-      <td class="small text-muted">${tag.createdBy}</td>
-      <td class="small text-muted">${tag.usageCount} diagram${tag.usageCount !== 1 ? 's' : ''}</td>
-      <td>
+      <td class="px-3 py-2 small text-muted">${tag.createdBy}</td>
+      <td class="px-3 py-2 small text-muted">${tag.usageCount} diagram${tag.usageCount !== 1 ? 's' : ''}</td>
+      <td class="px-3 py-2 text-end text-nowrap">
         <div class="btn-group btn-group-sm">
           <button class="btn btn-outline-secondary rename-tag-btn" title="Rename">
             <i class="bi bi-pencil"></i>
