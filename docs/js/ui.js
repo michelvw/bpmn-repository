@@ -48,8 +48,25 @@ export function showOverview() {
   document.getElementById('editorPage').classList.add('d-none');
   document.getElementById('adminPage').classList.add('d-none');
   document.getElementById('overviewPage').classList.remove('d-none');
-}
 
+  // Ensure view mode is consistent
+  const grid = document.getElementById('diagramGrid');
+  const table = document.getElementById('diagramTableView');
+  const btnTiles = document.getElementById('btnViewTiles');
+  const btnTable = document.getElementById('btnViewTable');
+
+  if (currentView === 'table') {
+    grid.classList.add('d-none');
+    table.classList.remove('d-none');
+    btnTiles.classList.remove('active');
+    btnTable.classList.add('active');
+  } else {
+    grid.classList.remove('d-none');
+    table.classList.add('d-none');
+    btnTiles.classList.add('active');
+    btnTable.classList.remove('active');
+  }
+}
 export function renderAdminUserTable(users, currentUserId, onDelete, onRename, onToggleAdmin, onResetPassword, onViewDiagrams) {
   const tbody = document.getElementById('adminUserTable');
   tbody.innerHTML = '';
