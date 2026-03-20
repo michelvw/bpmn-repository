@@ -76,9 +76,16 @@ export function renderAdminUserTable(users, currentUserId, onDelete, onRename, o
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${u.username || '-'}</td>
+      <td class="small text-muted">${u.email || '-'}</td>
       <td>${u.is_admin
         ? '<span class="badge bg-danger">Admin</span>'
         : '<span class="badge bg-secondary">User</span>'}
+      </td>
+      <td class="small text-muted text-nowrap">
+        ${u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : 'Never'}
+      </td>
+      <td class="small text-muted text-nowrap">
+        ${u.created_at ? new Date(u.created_at).toLocaleString() : '-'}
       </td>
       <td>
         <div class="btn-group btn-group-sm">

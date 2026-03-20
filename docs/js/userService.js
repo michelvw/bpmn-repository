@@ -47,11 +47,7 @@ export async function getIsAdmin() {
 }
 
 export async function getAllUsers() {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, username, is_admin')
-    .order('username', { ascending: true });
-
+  const { data, error } = await supabase.rpc('get_users_with_details');
   if (error) throw error;
   return data;
 }
@@ -75,12 +71,4 @@ export async function setAdminRole(userId, isAdmin) {
     p_is_admin: isAdmin
   });
   if (error) throw error;
-}
-
-export async function getUserEmail(userId) {
-  const { data, error } = await supabase.rpc('get_user_email', {
-    p_user_id: userId
-  });
-  if (error) throw error;
-  return data;
 }

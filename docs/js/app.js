@@ -309,8 +309,8 @@ async function openAdminPage() {
       await openAdminPage();
     }),
     withErrorHandling(async (userId, username) => {
-      const email = await userService.getUserEmail(userId);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const user = users.find(u => u.id === userId);
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: window.location.origin + window.location.pathname
       });
       if (error) throw error;
