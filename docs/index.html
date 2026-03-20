@@ -395,22 +395,26 @@
   <!-- BPMN Canvas -->
   <div id="canvas"></div>
 
-  <!-- Toggle Details Button -->
-  <button id="btnToggleDetails" class="btn btn-outline-secondary btn-sm mt-2"
-          data-bs-toggle="collapse" data-bs-target="#diagramDetails">
-    <i class="bi bi-info-circle"></i> Diagram details
-  </button>
-
-  <!-- Collapsible Diagram Details -->
-  <div class="collapse mt-2" id="diagramDetails">
-    <div class="card card-body">
-      <p>Version: <span id="diagramVersion">-</span></p>
-      <p>Comment: <span id="diagramComment">-</span></p>
-      <p>Owner: <span id="diagramOwner">-</span></p>
-      <p>Last version by: <span id="diagramCreatedBy">-</span></p>
-      <p>Last Modified: <span id="diagramDate">-</span></p>
+    <!-- Status bar -->
+    <div id="diagramStatusBar" class="border-bottom bg-light px-3 py-1 d-flex align-items-center gap-3 flex-wrap small text-muted">
+      <span id="statusVersion" class="text-nowrap">
+        <i class="bi bi-layers me-1"></i><span id="statusVersionValue">-</span>
+      </span>
+      <span class="text-muted opacity-50">·</span>
+      <span id="statusSaved" class="text-nowrap">
+        <i class="bi bi-clock me-1"></i><span id="statusSavedValue">-</span>
+      </span>
+      <span class="text-muted opacity-50">·</span>
+      <span id="statusOwner" class="text-nowrap">
+        <i class="bi bi-person me-1"></i><span id="statusOwnerValue">-</span>
+      </span>
+      <span class="text-muted opacity-50">·</span>
+      <span id="statusLastEdit" class="text-nowrap">
+        <i class="bi bi-pencil me-1"></i>Last edit by <span id="statusLastEditValue">-</span>
+      </span>
+      <span class="text-muted opacity-50">·</span>
+      <span id="statusTags" class="d-flex align-items-center gap-1 flex-wrap"></span>
     </div>
-  </div>
   </div>
 
   <!-- VERSION MODAL -->

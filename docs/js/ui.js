@@ -20,6 +20,24 @@ let sortDirection = 'desc';
 let ownedCollapsed = false;
 let sharedCollapsed = false;
 
+
+/* ===============================
+  FUNCTION TO CONVERT DATES TO RELATIVE TIME
+================================= */
+function relativeTime(dateStr) {
+  if (!dateStr) return '-';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} minute${mins !== 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  if (days < 7) return `${days} day${days !== 1 ? 's' : ''} ago`;
+  return new Date(dateStr).toLocaleDateString();
+}
+
 /* ===============================
    UI MODULE
 ================================= */
@@ -191,7 +209,6 @@ export function showAnonymousEditor() {
 
   // Show login button and keep details visible
   document.getElementById('btnLoginAnonymous').classList.remove('d-none');
-  document.getElementById('btnToggleDetails').classList.remove('d-none');
 }
 
 export function showEditor() {
@@ -856,35 +873,43 @@ function renderSingleTable(headId, bodyId, emptyId, diagrams, isShared, onOpen, 
    DIAGRAM DETAILS
 ================================= */
 export function renderDiagramDetails(diagram) {
-  const nameEl = document.getElementById('diagramName');
-  nameEl.textContent = diagram.name || 'New Diagram';
-
   const versions = diagram.diagram_versions || [];
   const latest = versions.length
     ? versions.reduce((a, b) => (a.version > b.version ? a : b))
     : null;
 
-  document.getElementById('diagramVersion').textContent = latest?.version || '-';
-  document.getElementById('diagramComment').textContent = latest?.comment || '-';
-  document.getElementById('diagramOwner').textContent = diagram.owner?.username || '-';
-  document.getElementById('diagramCreatedBy').textContent = latest?.created_by_user?.username || '-';
+  document.getElementById('statusVersionValue').textContent =
+    latest ? `v${latest.version}` : '-';
 
-  const dateEl = document.getElementById('diagramDate');
-  if (diagram.updated_at) {
-    const d = new Date(diagram.updated_at);
-    dateEl.textContent = isNaN(d) ? '-' : d.toLocaleString();
+  document.getElementById('statusSavedValue').textContent =
+    relativeTime(diagram.updated_at);
+
+  document.getElementById('statusOwnerValue').textContent =
+    diagram.owner?.username || '-';
+
+  document.getElementById('statusLastEditValue').textContent =
+    latest?.created_by_user?.username || '-';
+
+  // Tags
+  const tagsEl = document.getElementById('statusTags');
+  const tags = diagram.diagram_tags || [];
+  if (tags.length > 0) {
+    tagsEl.innerHTML = tags.map(t =>
+      `<span class="badge rounded-pill" style="background-color:${t.tags?.color || t.color}">${t.tags?.name || t.name}</span>`
+    ).join('');
+    tagsEl.previousElementSibling.classList.remove('d-none'); // show separator
   } else {
-    dateEl.textContent = '-';
+    tagsEl.innerHTML = '';
+    tagsEl.previousElementSibling.classList.add('d-none'); // hide separator
   }
 }
 
 export function resetDiagramDetails() {
-  document.getElementById('diagramName').textContent = 'New Diagram';
-  document.getElementById('diagramVersion').textContent = '-';
-  document.getElementById('diagramComment').textContent = '-';
-  document.getElementById('diagramOwner').textContent = '-';
-  document.getElementById('diagramCreatedBy').textContent = '-';
-  document.getElementById('diagramDate').textContent = '-';
+  document.getElementById('statusVersionValue').textContent = '-';
+  document.getElementById('statusSavedValue').textContent = '-';
+  document.getElementById('statusOwnerValue').textContent = '-';
+  document.getElementById('statusLastEditValue').textContent = '-';
+  document.getElementById('statusTags').innerHTML = '';
 }
 
 /* ===============================
@@ -966,16 +991,21 @@ export function closeVersionModal() {
 ================================= */
 
 export function showViewedVersion(details, onRestore) {
-  const nameEl = document.getElementById('diagramName');
-  nameEl.textContent = `${details.name || 'Unnamed diagram'} (read-only)`;
+  document.getElementById('diagramName').textContent =
+    `${details.name || 'Unnamed diagram'} (read-only)`;
 
-  document.getElementById('diagramVersion').textContent = details.version || '-';
-  document.getElementById('diagramComment').textContent = details.comment || '-';
-  document.getElementById('diagramOwner').textContent = details.owner?.username || '-';
+  document.getElementById('statusVersionValue').textContent =
+    details.version ? `v${details.version}` : '-';
 
-  const dateEl = document.getElementById('diagramDate');
-  const d = details.updated_at ? new Date(details.updated_at) : (details.created_at ? new Date(details.created_at) : null);
-  dateEl.textContent = d && !isNaN(d) ? d.toLocaleString() : '-';
+  document.getElementById('statusSavedValue').textContent =
+    relativeTime(details.updated_at || details.created_at);
+
+  document.getElementById('statusOwnerValue').textContent =
+    details.owner?.username || '-';
+
+  document.getElementById('statusLastEditValue').textContent = '-';
+
+  document.getElementById('statusTags').innerHTML = '';
 
   const btnSave = document.getElementById('btnSave');
   btnSave.innerHTML = '<i class="bi bi-arrow-counterclockwise"></i> Restore as Latest';
