@@ -873,6 +873,8 @@ function renderSingleTable(headId, bodyId, emptyId, diagrams, isShared, onOpen, 
    DIAGRAM DETAILS
 ================================= */
 export function renderDiagramDetails(diagram) {
+  document.getElementById('diagramName').textContent = diagram.name || 'New Diagram';
+  
   const versions = diagram.diagram_versions || [];
   const latest = versions.length
     ? versions.reduce((a, b) => (a.version > b.version ? a : b))
